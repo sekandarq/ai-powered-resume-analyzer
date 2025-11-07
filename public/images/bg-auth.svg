@@ -1,0 +1,34 @@
+<svg
+  width="1864"
+  height="1228"
+  viewBox="0 0 1864 1228"
+  xmlns="http://www.w3.org/2000/svg"
+  preserveAspectRatio="xMidYMid slice"
+>
+  <defs>
+    <linearGradient id="stormyGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#384959"/>
+      <stop offset="25%" stop-color="#6A89A7"/>
+      <stop offset="55%" stop-color="#88BDF2"/>
+      <stop offset="85%" stop-color="#BDDDFC"/>
+      <stop offset="100%" stop-color="#6A89A7"/>
+    </linearGradient>
+
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" />
+      <feColorMatrix type="saturate" values="0" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.06" />
+      </feComponentTransfer>
+    </filter>
+
+    <radialGradient id="vignette" cx="50%" cy="50%" r="75%">
+      <stop offset="50%" stop-color="black" stop-opacity="0" />
+      <stop offset="100%" stop-color="black" stop-opacity="0.25" />
+    </radialGradient>
+  </defs>
+
+  <rect width="1864" height="1228" fill="url(#stormyGradient)" />
+  <rect width="1864" height="1228" filter="url(#noise)" opacity="0.3" />
+  <rect width="1864" height="1228" fill="url(#vignette)" />
+</svg>
