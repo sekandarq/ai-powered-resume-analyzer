@@ -3,13 +3,18 @@ import type { Route } from "./+types/home";
 import { resumes } from "../../constants";
 import ResumeCard from "~/components/ResumeCard";
 import { Upload, FileText, Link as LinkIcon, Sparkles } from 'lucide-react';
+import { usePuterStore } from "~/lib/puter";
+import { useLocation, useNavigate } from "react-router";
+import React, { useEffect } from 'react'
 
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "ResuMatch" },
-    { name: "description", content: "Welcome to ResuMatch, a smart resume analyzer for your dream job!" },
-  ];
+    const {isLoading, auth} = usePuterStore();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if(!auth.isAuthenticated) navigate("/auth?next=/");
+    }, [auth.isAuthenticated]);
 }
 
 export default function Home() {
