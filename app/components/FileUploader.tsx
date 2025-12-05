@@ -1,27 +1,11 @@
 import React, {useState, useCallback} from 'react'
 import {useDropzone} from 'react-dropzone'
+import {formatSize} from '~/lib/utils'
 
 interface FileUploaderProps {
     onFileSelect?: (file: File | null) => void;}
 
-const formatSize = (bytes: number) => {
-    if (!bytes || bytes <= 0) return '0 KB';
-
-    const units = ['KB', 'MB', 'GB'];
-    let size = bytes / 1024;
-    let unitIndex = 0;
-
-    while (size >= 1024 && unitIndex < units.length - 1) {
-        size /= 1024;
-        unitIndex += 1;
-    }
-
-    return `${size.toFixed(1)} ${units[unitIndex]}`;
-};
-
 const FileUploader = ({onFileSelect}: FileUploaderProps) => {
-
-
     const onDrop = useCallback((acceptedFiles: File[]) => {
     // Do something with the files
     const file = acceptedFiles[0] || null;

@@ -60,7 +60,7 @@ form {
     @apply bg-linear-to-b from-light-blue-100 to-light-blue-200 p-4 rounded-2xl;
   }
   .primary-button {
-    @apply primary-gradient text-white rounded-full px-4 py-2 cursor-pointer hover:primary-gradient-hover w-full;
+    @apply bg-blue-300 text-black shadow-lg rounded-full px-4 py-2 cursor-pointer hover:bg-linear-to-r from-[#d53369] via-[#daae51] to-[#d53369] font-bold w-full;
   }
   .resume-nav {
     @apply flex flex-row justify-between items-center p-4 border-b border-gray-200;
@@ -72,13 +72,13 @@ form {
     }
   }
   .back-button {
-    @apply flex flex-row items-center gap-2 border border-gray-200 rounded-lg p-2 shadow-sm;
+    @apply flex flex-row items-center px-4 py-2 border border-gray-200 rounded-full p-2 shadow-sm bg-blue-300 hover:bg-linear-to-r from-[#2A7B9B] via-[#57C785] to-[#EDDD53] font-bold;
   }
   .auth-button {
     @apply primary-gradient rounded-full py-4 px-8 cursor-pointer w-[600px] max-md:w-full text-3xl font-semibold text-white;
   }
   .main-section {
-    @apply flex flex-col items-center gap-8 pt-12 max-sm:mx-2 mx-15 pb-5;
+    @apply flex flex-col items-center gap-8 pt-5 max-sm:mx-2 mx-15 pb-5;
   }
   .page-heading {
     @apply flex flex-col items-center gap-8 max-w-4xl text-center max-sm:gap-4;
