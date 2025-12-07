@@ -1,9 +1,75 @@
 import React from 'react'
 
-const ATS = () => {
+interface Suggestion {
+  type: "good" | "improve";
+  tip: string;
+}
+
+interface ATSProps {
+  score: number;
+  suggestions: Suggestion[];
+}
+
+const ATS: React.FC<ATSProps> = ({ score, suggestions }) => {
+  // Determine background gradient based on score
+  const gradientClass = score > 69
+    ? 'from-green-100'
+    : score > 40
+      ? 'from-yellow-100'
+      : 'from-red-100';
+
+  // Determine icon based on score
+  const iconSrc = score > 69
+    ? '/icons/ats-good.svg'
+    : score > 40
+      ? '/icons/ats-warning.svg'
+      : '/icons/ats-bad.svg';
+
+  // Determine subtitle based on score
+  const subtitle = score > 69
+    ? 'Great Job!'
+    : score > 40
+      ? 'Good Start'
+      : 'Needs Improvement';
+
   return (
-    <div>
-      
+    <div className={`bg-linear-to-b ${gradientClass} to-white rounded-2xl shadow-md w-full p-6`}>
+      {/* Top section with icon and headline */}
+      <div className="flex items-center gap-4 mb-6">
+        <img src={iconSrc} alt="ATS Score Icon" className="w-16 h-16" />
+        <div>
+          <h2 className="text-2xl font-bold">ATS Score - {score}/100</h2>
+          <p className='text-xl text-gray-600'>
+             This score represents the overall quality of your resume based on various factors listed below.
+          </p>
+        </div>
+      </div>
+
+      {/* Description section */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4 ">Feedback: {subtitle}</h2>
+
+        {/* Suggestions list */}
+        <div className="space-y-3">
+          {suggestions.map((suggestion, index) => (
+            <div key={index} className="flex items-start gap-3 text-lg">
+              <img
+                src={suggestion.type === "good" ? "/icons/check.svg" : "/icons/warning.svg"}
+                alt={suggestion.type === "good" ? "Check" : "Warning"}
+                className="w-8 h-8 mb-1"
+              />
+              <p className={suggestion.type === "good" ? "text-green-700" : "text-amber-700"}>
+                {suggestion.tip}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Closing encouragement */}
+      <p className="text-gray-800 italic text-lg">
+        Keep refining your resume to improve your chances of getting past ATS filters and into the hands of recruiters.
+      </p>
     </div>
   )
 }
