@@ -27,6 +27,22 @@ export const resumes: Resume[] = [
         score: 90,
         tips: [],
       },
+      keywordAlignment: {
+        coverage: 82,
+        matched: ["JavaScript", "React", "TypeScript", "UI", "Testing"],
+        missing: ["Webpack", "Accessibility"],
+        extras: ["Next.js"],
+      },
+      interviewPrep: {
+        questions: [
+          {
+            question: "Walk me through how you optimized a React app for performance.",
+            rationale: "Tests depth in frontend optimization for a large codebase.",
+            answerGuidance:
+              "Describe metrics, profiling steps, key changes (memoization, code splitting), and measurable impact.",
+          },
+        ],
+      },
     },
   },
   {
@@ -56,6 +72,22 @@ export const resumes: Resume[] = [
       skills: {
         score: 90,
         tips: [],
+      },
+      keywordAlignment: {
+        coverage: 60,
+        matched: ["Azure", "CI/CD", "Linux"],
+        missing: ["Terraform", "Kubernetes", "Networking"],
+        extras: ["Python"],
+      },
+      interviewPrep: {
+        questions: [
+          {
+            question: "Explain a time you improved cloud cost efficiency.",
+            rationale: "Checks cost-awareness, a priority for the role.",
+            answerGuidance:
+              "Quantify savings, detail monitoring, right-sizing, and guardrails you put in place.",
+          },
+        ],
       },
     },
   },
@@ -87,6 +119,22 @@ export const resumes: Resume[] = [
         score: 90,
         tips: [],
       },
+      keywordAlignment: {
+        coverage: 73,
+        matched: ["Swift", "iOS", "UIKit", "MVVM"],
+        missing: ["SwiftUI", "Combine"],
+        extras: ["GraphQL"],
+      },
+      interviewPrep: {
+        questions: [
+          {
+            question: "Describe a complex gesture or animation you implemented.",
+            rationale: "Assesses UIKit/iOS craftsmanship.",
+            answerGuidance:
+              "Cover user need, architecture, performance considerations, and testing.",
+          },
+        ],
+      },
     },
   },
     {
@@ -116,6 +164,22 @@ export const resumes: Resume[] = [
       skills: {
         score: 90,
         tips: [],
+      },
+      keywordAlignment: {
+        coverage: 82,
+        matched: ["JavaScript", "React", "TypeScript", "UI", "Testing"],
+        missing: ["Webpack", "Accessibility"],
+        extras: ["Next.js"],
+      },
+      interviewPrep: {
+        questions: [
+          {
+            question: "Walk me through how you optimized a React app for performance.",
+            rationale: "Tests depth in frontend optimization for a large codebase.",
+            answerGuidance:
+              "Describe metrics, profiling steps, key changes (memoization, code splitting), and measurable impact.",
+          },
+        ],
       },
     },
   },
@@ -147,6 +211,22 @@ export const resumes: Resume[] = [
         score: 90,
         tips: [],
       },
+      keywordAlignment: {
+        coverage: 60,
+        matched: ["Azure", "CI/CD", "Linux"],
+        missing: ["Terraform", "Kubernetes", "Networking"],
+        extras: ["Python"],
+      },
+      interviewPrep: {
+        questions: [
+          {
+            question: "Explain a time you improved cloud cost efficiency.",
+            rationale: "Checks cost-awareness, a priority for the role.",
+            answerGuidance:
+              "Quantify savings, detail monitoring, right-sizing, and guardrails you put in place.",
+          },
+        ],
+      },
     },
   },
   {
@@ -176,6 +256,22 @@ export const resumes: Resume[] = [
       skills: {
         score: 90,
         tips: [],
+      },
+      keywordAlignment: {
+        coverage: 73,
+        matched: ["Swift", "iOS", "UIKit", "MVVM"],
+        missing: ["SwiftUI", "Combine"],
+        extras: ["GraphQL"],
+      },
+      interviewPrep: {
+        questions: [
+          {
+            question: "Describe a complex gesture or animation you implemented.",
+            rationale: "Assesses UIKit/iOS craftsmanship.",
+            answerGuidance:
+              "Cover user need, architecture, performance considerations, and testing.",
+          },
+        ],
       },
     },
   },
@@ -223,6 +319,21 @@ export const AIResponseFormat = `
           explanation: string; //explain in detail here
         }[]; //give 3-4 tips
       };
+
+      keywordAlignment: {
+        coverage: number; //0-100 percentage of critical job keywords present in the resume
+        matched: string[]; //keywords detected in the resume
+        missing: string[]; //high-priority keywords from the job description not present
+        extras: string[]; //keywords in the resume that are not in the job description but relevant
+      };
+
+      interviewPrep: {
+        questions: {
+          question: string; //concise interview question
+          rationale: string; //why this is asked for this role
+          answerGuidance: string; //practical guidance to craft a strong answer
+        }[]; //provide 4-6 questions
+      };
     }`;
 
 export const prepareInstructions = ({
@@ -242,6 +353,8 @@ export const prepareInstructions = ({
   If the job description is not in English, translate it to English before analysis.
   The job title is: ${jobTitle}
   The job description is: ${jobDescription}
+  Identify critical job keywords from the job description, check if they exist in the resume, and report coverage plus matched/missing/extras lists.
+  Provide 4-6 interview preparation questions tailored to this role with rationale and guidance on how to answer.
   Provide the feedback using the following format: ${AIResponseFormat}
   Return the analysis as a JSON object, without any other text and without the backticks.
   Do not include any other text or comments.`;

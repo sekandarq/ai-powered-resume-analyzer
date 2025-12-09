@@ -5,6 +5,8 @@ import ResumePageNavbar from "~/components/ResumePageNavbar";
 import Summary from "~/components/feedback/Summary";
 import ATS from "~/components/feedback/ATS";
 import Details from "~/components/feedback/Details";
+import KeywordAlignment from "~/components/feedback/KeywordAlignment";
+import InterviewPrep from "~/components/feedback/InterviewPrep";
 
 
 export const meta = () => ([
@@ -18,6 +20,11 @@ const Resume = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [resumeUrl, setResumeUrl] = useState('');
     const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [jobInfo, setJobInfo] = useState<{title: string; description: string; company: string}>({
+        title: '',
+        description: '',
+        company: ''
+    });
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -32,6 +39,11 @@ const Resume = () => {
             if(!resume) return;
 
             const data = JSON.parse(resume);
+            setJobInfo({
+                title: data.jobTitle || '',
+                description: data.jobDescription || '',
+                company: data.companyName || ''
+            });
 
             const resumeBlob = await fs.read(data.resumePath);
             if(!resumeBlob) return;
@@ -79,7 +91,17 @@ const Resume = () => {
                     <div className="flex flex-col gap-8 animate-in fade-in duration-1000">
                         <Summary feedback={feedback}/>
                         <ATS score={feedback.ATS.score || 0} suggestions={feedback.ATS.tips || []}/>
+                        {feedback.keywordAlignment && (
+                            <KeywordAlignment
+                                jobTitle={jobInfo.title}
+                                jobDescription={jobInfo.description}
+                                data={feedback.keywordAlignment}
+                            />
+                        )}
                         <Details feedback={feedback}/>
+                        {feedback.interviewPrep && (
+                            <InterviewPrep questions={feedback.interviewPrep.questions || []}/>
+                        )}
                     </div>
                 ) : (
                     <img src="/images/resume-scan-2.gif" className="w-full"/>

@@ -43,4 +43,19 @@ interface Feedback {
             explanation: string;
         }[];
     };
+
+    keywordAlignment: {
+        coverage: number; // percent of priority keywords matched
+        matched: string[];
+        missing: string[];
+        extras: string[];
+    };
+
+    interviewPrep: {
+        questions: {
+            question: string;
+            rationale: string;
+            answerGuidance: string;
+        }[];
+    };
 }
