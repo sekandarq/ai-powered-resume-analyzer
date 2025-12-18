@@ -9,6 +9,10 @@ import { convertPdfToImage } from '~/lib/pdf2img'
 import { generateUUID } from '~/lib/utils'
 import { prepareInstructions } from '../../constants'
 
+export const meta = () => ([
+    { title: 'ResuMatch | Upload Resume' },
+    { name: 'description', content: 'Upload your resume to get detailed feedback' },
+])
 
 const upload = () => {
   const { auth, isLoading, fs, ai, kv} = usePuterStore();
@@ -16,10 +20,85 @@ const upload = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [jobDescription, setJobDescription] = useState("");
+  const [jobSource, setJobSource] = useState<"text" | "image" | "link">("text");
+  const [jobImage, setJobImage] = useState<File | null>(null);
+  const [jobLink, setJobLink] = useState("");
+  const [jobLinkStatus, setJobLinkStatus] = useState<string>("");
+  const [jobLinkError, setJobLinkError] = useState<string>("");
 
   const handleFileSelect = (file: File | null) => {
     setFile(file);
   }
+
+  const extractTextFromHtml = (html: string) => {
+    // Try to pluck likely job description nodes, fallback to stripped text
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const selectors = [
+      "#jobDescriptionText",
+      "[data-testid='jobDescriptionText']",
+      ".jobsearch-JobComponent",
+      "article",
+      ".jobDescriptionContent",
+    ];
+    for (const sel of selectors) {
+      const el = doc.querySelector(sel);
+      if (el) return el.textContent?.trim() || "";
+    }
+    return doc.body.textContent?.replace(/\s+/g, " ").trim() || "";
+  };
+
+  const handleJobImage = async (imageFile: File | null) => {
+    setJobImage(imageFile);
+    if (!imageFile) return;
+    if (!ai?.img2txt) {
+      setStatusText("Error: Image to text not available");
+      return;
+    }
+    setIsProcessing(true);
+    setStatusText("Extracting text from image...");
+    try {
+      const text = await ai.img2txt(imageFile);
+      if (text) {
+        setJobDescription(text);
+        setJobSource("text"); // switch to text for review
+        setStatusText("Text extracted from image. Review below.");
+      } else {
+        setStatusText("Error: No text extracted from image");
+      }
+    } catch (err) {
+      setStatusText("Error: Failed to extract text from image");
+      console.error(err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleJobLinkFetch = async () => {
+    if (!jobLink) return;
+    setJobLinkError("");
+    setJobLinkStatus("Fetching job description from link...");
+    try {
+      const res = await fetch(jobLink);
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+      const html = await res.text();
+      const text = extractTextFromHtml(html);
+      if (!text) {
+        setJobLinkError("Could not parse job description from the link. Please paste it manually.");
+        setJobLinkStatus("");
+        return;
+      }
+      setJobDescription(text);
+      setJobSource("text");
+      setJobLinkStatus("Job description loaded from link. Review below.");
+    } catch (err) {
+      setJobLinkError("Failed to fetch job description (site may block direct fetch). Please paste it manually.");
+      console.error(err);
+    }
+  };
 
   const handleAnalyze = async ({ companyName, jobTitle, jobDescription, file }: { companyName: string, jobTitle: string, jobDescription: string, file: File  }) => {
       setIsProcessing(true);
@@ -74,11 +153,15 @@ const upload = () => {
 
       const companyName = formData.get('company-name') as string;
       const jobTitle = formData.get('job-title') as string;
-      const jobDescription = formData.get('job-description') as string;
+      const jobDescriptionValue = jobDescription;
 
       if(!file) return;
+      if(!jobDescriptionValue) {
+        setStatusText("Please provide a job description via text, image, or link.");
+        return;
+      }
 
-      handleAnalyze({ companyName, jobTitle, jobDescription, file });
+      handleAnalyze({ companyName, jobTitle, jobDescription: jobDescriptionValue, file });
   }  
 
   return (
@@ -110,8 +193,57 @@ const upload = () => {
                 </div>
 
                 <div className='form-div py-2'>
-                  <label htmlFor='job-description'>Job Description</label>
-                  <textarea id="job-description" name="job-description" rows={6} placeholder='Paste Job Description here...' ></textarea>
+                  <label>Job Description</label>
+                  <div className="flex flex-wrap gap-2">
+                    {["text", "image", "link"].map((src) => (
+                      <button key={src} type="button" onClick={() => setJobSource(src as typeof jobSource)}
+                      className={`px-3 py-2 rounded-full text-sm border hover:bg-gray-300 ${jobSource === src ? "bg-blue-100 border-blue-300" : "bg-white border-gray-200"}`}>
+                        {src === "text" ? "Paste text" : src === "image" ? "Upload image" : "Paste link"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {jobSource === "text" && (
+                    <textarea id="job-description" name="job-description" rows={6} placeholder='Paste Job Description here...' value={jobDescription} onChange={(e) => setJobDescription(e.target.value)}/>
+                  
+                  )}
+
+                  {jobSource === "image" && (
+                    <div className="flex flex-col gap-3 mt-2">
+                      <label htmlFor="job-image" className="text-sm text-gray-700">Upload an image of the job description</label>
+                      <input id="job-image" type="file" accept="image/*" onChange={(e) => handleJobImage(e.target.files?.[0] || null)}
+                      className="w-full cursor-pointer"/>
+
+                      {jobImage && (
+                        <p className="text-sm text-gray-600">Selected: {jobImage.name}</p>
+                      )}
+                      {jobDescription && (
+                        <textarea rows={4} value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} 
+                        placeholder="Extracted text will appear here for editing..."/>
+                      )}
+                    </div>
+                  )}
+
+                  {jobSource === "link" && (
+                    <div className="flex flex-col gap-3 mt-2">
+                      <input type="url" placeholder="https://example.com/job-posting" value={jobLink} onChange={(e) => setJobLink(e.target.value)} 
+                      className="w-full p-4 inset-shadow rounded-2xl focus:outline-none bg-white"/>
+                      <button type="button" onClick={handleJobLinkFetch} className="primary-button w-fit">
+                        Fetch Job Description
+                      </button>
+                      {jobLinkStatus && (
+                        <p className="text-sm text-green-700">{jobLinkStatus}</p>
+                      )}
+                      {jobLinkError && (
+                        <p className="text-sm text-red-600">{jobLinkError}</p>
+                      )}
+
+                      {jobDescription && (
+                        <textarea rows={4} value={jobDescription} onChange={(e) => setJobDescription(e.target.value)}
+                        placeholder="Fetched job description will appear here for editing..."/>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className='form-div py-2'>

@@ -10,7 +10,7 @@ import InterviewPrep from "~/components/feedback/InterviewPrep";
 
 
 export const meta = () => ([
-    { title: 'Resumind | Review ' },
+    { title: 'ResuMatch | Review ' },
     { name: 'description', content: 'Detailed overview of your resume' },
 ])
 
