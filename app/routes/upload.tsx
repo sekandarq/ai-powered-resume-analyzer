@@ -10,6 +10,11 @@ import { generateUUID } from '~/lib/utils'
 import { prepareInstructions } from '../../constants'
 import LoadingSpinner from '~/components/LoadingSpinner'
 import { useToastStore } from '~/lib/toast'
+import Button from '~/components/ui/Button'
+import Input from '~/components/ui/Input'
+import Textarea from '~/components/ui/Textarea'
+import Card from '~/components/ui/Card'
+import Alert from '~/components/ui/Alert'
 
 export const meta = () => ([
     { title: 'ResuMatch | Upload Resume' },
@@ -29,6 +34,15 @@ const upload = () => {
   const [jobLink, setJobLink] = useState("");
   const [jobLinkStatus, setJobLinkStatus] = useState<string>("");
   const [jobLinkError, setJobLinkError] = useState<string>("");
+
+  const progressSteps = [
+    "Uploading resume",
+    "Converting PDF to image",
+    "Uploading resume preview",
+    "Preparing job context",
+    "Running AI analysis",
+    "Finalizing dashboard",
+  ];
 
   const handleFileSelect = (file: File | null) => {
     setFile(file);
@@ -141,7 +155,7 @@ const upload = () => {
     try {
       setIsProcessing(true);
 
-      setStatusText('Uploading the file...');
+      setStatusText('Uploading resume');
       const uploadedFile = await fs.upload([file]);
       if(!uploadedFile) {
         setStatusText('Failed to upload file.');
@@ -149,7 +163,7 @@ const upload = () => {
         return;
       }
 
-      setStatusText('Converting to image...');
+      setStatusText('Converting PDF to image');
       const imageFile = await convertPdfToImage(file);
       if(!imageFile.file) {
         setStatusText('Failed to convert PDF to image.');
@@ -157,7 +171,7 @@ const upload = () => {
         return;
       }
 
-      setStatusText('Uploading the image...');
+      setStatusText('Uploading resume preview');
       const uploadedImage = await fs.upload([imageFile.file]);
       if(!uploadedImage) {
         setStatusText('Failed to upload image.');
@@ -165,7 +179,7 @@ const upload = () => {
         return;
       }
 
-      setStatusText('Preparing data...');
+      setStatusText('Preparing job context');
       const uuid = generateUUID();
       const data = {
           id: uuid,
@@ -176,7 +190,7 @@ const upload = () => {
       }
       await kv.set(`resume:${uuid}`, JSON.stringify(data));
 
-      setStatusText('Analyzing...');
+      setStatusText('Running AI analysis');
 
       const feedback = await ai.feedback(
           uploadedFile.path,
@@ -194,7 +208,7 @@ const upload = () => {
 
       data.feedback = JSON.parse(feedbackText);
       await kv.set(`resume:${uuid}`, JSON.stringify(data));
-      setStatusText('Analysis complete, redirecting...');
+      setStatusText('Finalizing dashboard');
       addToast({ type: 'success', title: 'Analysis complete', description: 'Opening your feedback dashboard.' });
       console.log(data);
       navigate(`/resume/${uuid}`);
@@ -236,59 +250,104 @@ const upload = () => {
   }  
 
   return (
-   <main className="bg-[url('/images/bg-main.svg')] bg-cover">
+   <main className="app-shell">
     <Navbar />
 
     <section className="main-section">
-        <div className='page-heading'>
+        <div className='page-heading stagger-rise'>
+            <div className="hero-pill">
+              <span className="h-2.5 w-2.5 rounded-full bg-cyan-500 animate-pulse" />
+              <span>Guided Analysis Flow</span>
+            </div>
             <h1>AI-Powered feedback to get the best out of your <span className="text-transparent bg-clip-text bg-linear-to-r from-[#FBBF24] via-[#FB7185] to-[#1aff35]">resumes!</span></h1>
+            <div className="flex flex-wrap justify-center gap-2">
+              <span className="step-chip"><span className="dot">1</span> Job context</span>
+              <span className="step-chip"><span className="dot">2</span> Resume upload</span>
+              <span className="step-chip"><span className="dot">3</span> AI feedback</span>
+            </div>
             {isProcessing ? (
-              <div className='w-full rounded-3xl bg-white/75 p-8 shadow-md'>
+              <Card className='w-full'>
                 <LoadingSpinner label={statusText} className='py-8' />
-              </div>
+                <div className="mt-6 grid grid-cols-1 gap-2 text-left sm:grid-cols-2">
+                  {progressSteps.map((step, index) => {
+                    const isActive = step === statusText;
+                    const isCompleted = progressSteps.indexOf(statusText) > index;
+
+                    return (
+                      <div
+                        key={step}
+                        className={`rounded-xl border px-3 py-2 text-sm transition ${
+                          isActive
+                            ? "border-cyan-300 bg-cyan-50 text-cyan-900"
+                            : isCompleted
+                              ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                              : "border-slate-200 bg-white text-slate-500"
+                        }`}
+                      >
+                        {step}
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
             ) : (
               <h2>we review it, provide ATS score, and give improvement tips to land your dream job.</h2>
             )}
 
             {!isProcessing &&  (
-              <form id='upload-form' onSubmit={handleSubmit} className='flex flex-col gap-4 mt-4'>
-                <div className='form-div py-2'>
+              <form id='upload-form' onSubmit={handleSubmit} className='glass-panel mt-2 flex w-full flex-col gap-4'>
+                <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <span className="dot inline-flex h-6 w-6 items-center justify-center rounded-full bg-linear-to-r from-cyan-300 to-lime-300 text-xs text-slate-900">1</span>
+                  Company + role details
+                </div>
+
+                <div className='form-div'>
                   <label htmlFor='company-name'>Company Name</label>
-                  <input type="text" id='company-name' name="company-name" placeholder='Enter Company Name' />
+                  <Input type="text" id='company-name' name="company-name" placeholder='Enter Company Name' />
 
                 </div>
-                <div className='form-div py-2'>
+                <div className='form-div'>
                   <label htmlFor='job-title'>Job Title</label>
-                  <input type="text" id='job-title' name="job-title" placeholder='Enter Job Title' />
+                  <Input type="text" id='job-title' name="job-title" placeholder='Enter Job Title' />
                 </div>
 
-                <div className='form-div py-2'>
+                <div className="mt-2 mb-1 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <span className="dot inline-flex h-6 w-6 items-center justify-center rounded-full bg-linear-to-r from-cyan-300 to-lime-300 text-xs text-slate-900">2</span>
+                  Job description source
+                </div>
+
+                <div className='form-div'>
                   <label>Job Description</label>
                   <div className="flex flex-wrap gap-2">
                     {["text", "image", "link"].map((src) => (
-                      <button key={src} type="button" onClick={() => setJobSource(src as typeof jobSource)}
-                      className={`px-3 py-2 rounded-full text-sm border hover:bg-gray-300 ${jobSource === src ? "bg-blue-100 border-blue-300" : "bg-white border-gray-200"}`}>
+                      <Button
+                        key={src}
+                        type="button"
+                        variant={jobSource === src ? "primary" : "secondary"}
+                        size="sm"
+                        onClick={() => setJobSource(src as typeof jobSource)}
+                      >
                         {src === "text" ? "Paste text" : src === "image" ? "Upload image" : "Paste link"}
-                      </button>
+                      </Button>
                     ))}
                   </div>
 
                   {jobSource === "text" && (
-                    <textarea id="job-description" name="job-description" rows={6} placeholder='Paste Job Description here...' value={jobDescription} onChange={(e) => setJobDescription(e.target.value)}/>
+                    <Textarea id="job-description" name="job-description" rows={6} placeholder='Paste Job Description here...' value={jobDescription} onChange={(e) => setJobDescription(e.target.value)}/>
                   
                   )}
 
                   {jobSource === "image" && (
                     <div className="flex flex-col gap-3 mt-2">
                       <label htmlFor="job-image" className="text-sm text-gray-700">Upload an image of the job description</label>
-                      <input id="job-image" type="file" accept="image/*" onChange={(e) => handleJobImage(e.target.files?.[0] || null)}
-                      className="w-full cursor-pointer"/>
+                      <Input id="job-image" type="file" accept="image/*" onChange={(e) => handleJobImage(e.target.files?.[0] || null)}
+                      className="cursor-pointer"/>
 
                       {jobImage && (
                         <p className="text-sm text-gray-600">Selected: {jobImage.name}</p>
                       )}
                       {jobDescription && (
-                        <textarea rows={4} value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} 
+                        <Textarea rows={4} value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} 
                         placeholder="Extracted text will appear here for editing..."/>
                       )}
                     </div>
@@ -296,27 +355,31 @@ const upload = () => {
 
                   {jobSource === "link" && (
                     <div className="flex flex-col gap-3 mt-2">
-                      <input type="url" placeholder="https://example.com/job-posting" value={jobLink} onChange={(e) => setJobLink(e.target.value)} 
-                      className="w-full p-4 inset-shadow rounded-2xl focus:outline-none bg-white"/>
-                      <button type="button" onClick={handleJobLinkFetch} className="primary-button w-fit">
+                      <Input type="url" placeholder="https://example.com/job-posting" value={jobLink} onChange={(e) => setJobLink(e.target.value)} />
+                      <Button type="button" onClick={handleJobLinkFetch}>
                         Fetch Job Description
-                      </button>
+                      </Button>
                       {jobLinkStatus && (
-                        <p className="text-sm text-green-700">{jobLinkStatus}</p>
+                        <Alert tone='success'>{jobLinkStatus}</Alert>
                       )}
                       {jobLinkError && (
-                        <p className="text-sm text-red-600">{jobLinkError}</p>
+                        <Alert tone='error'>{jobLinkError}</Alert>
                       )}
 
                       {jobDescription && (
-                        <textarea rows={4} value={jobDescription} onChange={(e) => setJobDescription(e.target.value)}
+                        <Textarea rows={4} value={jobDescription} onChange={(e) => setJobDescription(e.target.value)}
                         placeholder="Fetched job description will appear here for editing..."/>
                       )}
                     </div>
                   )}
                 </div>
 
-                <div className='form-div py-2'>
+                <div className="mt-2 mb-1 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <span className="dot inline-flex h-6 w-6 items-center justify-center rounded-full bg-linear-to-r from-cyan-300 to-lime-300 text-xs text-slate-900">3</span>
+                  Upload resume + analyze
+                </div>
+
+                <div className='form-div'>
                   <label htmlFor='uploader'>Upload Your Resume</label>
                   <FileUploader onFileSelect={handleFileSelect} />
                 </div>

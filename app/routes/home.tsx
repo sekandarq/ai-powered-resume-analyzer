@@ -6,6 +6,10 @@ import { Link, useNavigate } from "react-router";
 import React, { useEffect, useState } from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { useToastStore } from "~/lib/toast";
+import Card from "~/components/ui/Card";
+import Alert from "~/components/ui/Alert";
+import { buttonVariants } from "~/components/ui/Button";
+import { cn } from "~/lib/utils";
 
 export default function Home() {
   const { auth, isLoading, kv } = usePuterStore();
@@ -69,51 +73,94 @@ export default function Home() {
   const showEmpty = !loadingResumes && resumes.length === 0;
 
   return (
-    <main className="bg-[url('/images/bg-main.svg')] bg-cover">
+    <main className="app-shell">
       <Navbar/>
 
       <section className="main-section">
-        <div className="page-heading">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-50 text-teal-700 text-sm">
+        <div className="page-heading stagger-rise">
+          <div className="hero-pill">
             <Sparkles className="w-4 h-4" />
-            <span>AI-Powered Analysis</span>
+            <span>AI-Powered Resume Intelligence</span>
           </div>
 
           <h1>
-            Welcome to ResuMatch,<br /> A Smart Resume Analyzer for{" "}
+            Welcome to ResuMatch,<br /> Turn your resume into a
             <span className="text-transparent bg-clip-text bg-linear-to-r from-[#FBBF24] via-[#FB7185] to-[#1aff35]">
-              Your Dream Job!
+              {' '}high-conversion profile.
             </span>
           </h1>
 
+          <p className="max-w-3xl text-base text-slate-600 sm:text-lg">
+            Analyze ATS readiness, keyword fit, and interview prep signals in one flow.
+            Iterate faster with clear strengths, gaps, and next actions.
+          </p>
+
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="feature-stat stagger-rise delay-1">
+              <p className="label">Saved Analyses</p>
+              <p className="value">{resumes.length}</p>
+            </div>
+            <div className="feature-stat stagger-rise delay-2">
+              <p className="label">Feedback Dimensions</p>
+              <p className="value">6</p>
+            </div>
+            <div className="feature-stat stagger-rise delay-3">
+              <p className="label">Best Use Case</p>
+              <p className="value">Job-Specific Resume</p>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
             {resumes.length > 0 && (
-              <Link to={`/resume/${resumes[0].id}`} className="back-button w-fit max-w-xs text-center">
+              <Link
+                to={`/resume/${resumes[0].id}`}
+                className={cn(buttonVariants({ variant: "secondary", size: "md" }), "max-w-xs text-center")}
+              >
                 View latest analysis
               </Link>
             )}
           </div>
         </div>
 
-        {error && (
-          <div className="w-full max-w-2xl bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-center">
-            {error}
+        <Card className="w-full stagger-rise delay-1">
+          <div className="flex flex-col gap-4">
+            <h3 className="text-left text-lg font-bold text-slate-900">How it works</h3>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="glass-panel text-left">
+                <span className="step-chip"><span className="dot">1</span> Add Job Context</span>
+                <p className="mt-3 text-sm text-slate-600">Paste text, upload screenshot, or fetch from a link to anchor your analysis.</p>
+              </div>
+              <div className="glass-panel text-left">
+                <span className="step-chip"><span className="dot">2</span> Upload Resume</span>
+                <p className="mt-3 text-sm text-slate-600">We process your resume and evaluate ATS alignment, structure, and tone.</p>
+              </div>
+              <div className="glass-panel text-left">
+                <span className="step-chip"><span className="dot">3</span> Improve Faster</span>
+                <p className="mt-3 text-sm text-slate-600">Use targeted feedback and interview prep to iterate your next version with confidence.</p>
+              </div>
+            </div>
           </div>
+        </Card>
+
+        {error && (
+          <Alert tone="error" className="w-full max-w-2xl justify-center text-center">
+            {error}
+          </Alert>
         )}
 
         {loadingResumes ? (
-          <div className="w-full rounded-2xl bg-white/80 p-8 shadow-sm">
+          <Card className="w-full">
             <LoadingSpinner label="Loading your resume analyses..." className="py-10" />
-          </div>
+          </Card>
         ) : showEmpty ? (
-          <div className="flex flex-col items-center gap-4 bg-white/70 rounded-2xl p-8 shadow">
+          <Card className="flex flex-col items-center gap-4">
             <p className="text-xl text-gray-700 text-center">
               No analyses yet. Upload your first resume to get tailored feedback.
             </p>
-            <Link to="/upload" className="primary-button max-w-xs text-center">
+            <Link to="/upload" className={cn(buttonVariants({ variant: "primary", size: "lg", fullWidth: true }), "max-w-xs text-center")}>
               Upload now
             </Link>
-          </div>
+          </Card>
         ) : (
           <div className="resumes-section">
             {resumes.map((resume) => (
