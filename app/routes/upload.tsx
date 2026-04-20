@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router'
 import { convertPdfToImage } from '~/lib/pdf2img'
 import { generateUUID } from '~/lib/utils'
 import { prepareInstructions } from '../../constants'
+import LoadingSpinner from '~/components/LoadingSpinner'
+import { useToastStore } from '~/lib/toast'
 
 export const meta = () => ([
     { title: 'ResuMatch | Upload Resume' },
@@ -17,6 +19,7 @@ export const meta = () => ([
 const upload = () => {
   const { auth, isLoading, fs, ai, kv} = usePuterStore();
   const navigate = useNavigate();
+  const addToast = useToastStore((state) => state.addToast);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -53,7 +56,11 @@ const upload = () => {
     setJobImage(imageFile);
     if (!imageFile) return;
     if (!ai?.img2txt) {
-      setStatusText("Error: Image to text not available");
+      addToast({
+        type: "error",
+        title: "Image extraction unavailable",
+        description: "The image-to-text tool is not available right now.",
+      });
       return;
     }
     setIsProcessing(true);
@@ -64,11 +71,26 @@ const upload = () => {
         setJobDescription(text);
         setJobSource("text"); // switch to text for review
         setStatusText("Text extracted from image. Review below.");
+        addToast({
+          type: "success",
+          title: "Text extracted",
+          description: "Review and edit the extracted description before analysis.",
+        });
       } else {
-        setStatusText("Error: No text extracted from image");
+        setStatusText("No text extracted from image.");
+        addToast({
+          type: "error",
+          title: "No text found",
+          description: "Try a clearer image or paste the job description as text.",
+        });
       }
     } catch (err) {
-      setStatusText("Error: Failed to extract text from image");
+      setStatusText("Failed to extract text from image.");
+      addToast({
+        type: "error",
+        title: "Extraction failed",
+        description: "Could not read text from the uploaded image.",
+      });
       console.error(err);
     } finally {
       setIsProcessing(false);
@@ -89,31 +111,59 @@ const upload = () => {
       if (!text) {
         setJobLinkError("Could not parse job description from the link. Please paste it manually.");
         setJobLinkStatus("");
+        addToast({
+          type: "error",
+          title: "Could not parse link",
+          description: "Paste the job description manually if parsing is blocked.",
+        });
         return;
       }
       setJobDescription(text);
       setJobSource("text");
       setJobLinkStatus("Job description loaded from link. Review below.");
+      addToast({
+        type: "success",
+        title: "Job description loaded",
+        description: "Review and edit the extracted text before analysis.",
+      });
     } catch (err) {
       setJobLinkError("Failed to fetch job description (site may block direct fetch). Please paste it manually.");
+      addToast({
+        type: "error",
+        title: "Fetch failed",
+        description: "This site blocked direct fetch. Please paste the description manually.",
+      });
       console.error(err);
     }
   };
 
   const handleAnalyze = async ({ companyName, jobTitle, jobDescription, file }: { companyName: string, jobTitle: string, jobDescription: string, file: File  }) => {
+    try {
       setIsProcessing(true);
 
       setStatusText('Uploading the file...');
       const uploadedFile = await fs.upload([file]);
-      if(!uploadedFile) return setStatusText('Error: Failed to upload file');
+      if(!uploadedFile) {
+        setStatusText('Failed to upload file.');
+        addToast({ type: 'error', title: 'Upload failed', description: 'Resume upload did not complete.' });
+        return;
+      }
 
       setStatusText('Converting to image...');
       const imageFile = await convertPdfToImage(file);
-      if(!imageFile.file) return setStatusText('Error: Failed to convert PDF to image');
+      if(!imageFile.file) {
+        setStatusText('Failed to convert PDF to image.');
+        addToast({ type: 'error', title: 'Conversion failed', description: 'Could not convert resume PDF to image.' });
+        return;
+      }
 
       setStatusText('Uploading the image...');
       const uploadedImage = await fs.upload([imageFile.file]);
-      if(!uploadedImage) return setStatusText('Error: Failed to upload image');
+      if(!uploadedImage) {
+        setStatusText('Failed to upload image.');
+        addToast({ type: 'error', title: 'Image upload failed', description: 'Could not upload converted resume preview image.' });
+        return;
+      }
 
       setStatusText('Preparing data...');
       const uuid = generateUUID();
@@ -132,7 +182,11 @@ const upload = () => {
           uploadedFile.path,
           prepareInstructions({ jobTitle, jobDescription })
       )
-      if (!feedback) return setStatusText('Error: Failed to analyze resume');
+      if (!feedback) {
+        setStatusText('Failed to analyze resume.');
+        addToast({ type: 'error', title: 'Analysis failed', description: 'AI analysis did not return a valid result.' });
+        return;
+      }
 
       const feedbackText = typeof feedback.message.content === 'string'
           ? feedback.message.content
@@ -141,8 +195,20 @@ const upload = () => {
       data.feedback = JSON.parse(feedbackText);
       await kv.set(`resume:${uuid}`, JSON.stringify(data));
       setStatusText('Analysis complete, redirecting...');
+      addToast({ type: 'success', title: 'Analysis complete', description: 'Opening your feedback dashboard.' });
       console.log(data);
       navigate(`/resume/${uuid}`);
+    } catch (err) {
+      setStatusText('Something went wrong during analysis.');
+      addToast({
+        type: 'error',
+        title: 'Unexpected error',
+        description: 'Please try again in a moment.',
+      });
+      console.error(err);
+    } finally {
+      setIsProcessing(false);
+    }
   }
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -158,6 +224,11 @@ const upload = () => {
       if(!file) return;
       if(!jobDescriptionValue) {
         setStatusText("Please provide a job description via text, image, or link.");
+        addToast({
+          type: 'info',
+          title: 'Job description required',
+          description: 'Add job details using text, image, or a link before analysis.',
+        });
         return;
       }
 
@@ -172,10 +243,9 @@ const upload = () => {
         <div className='page-heading'>
             <h1>AI-Powered feedback to get the best out of your <span className="text-transparent bg-clip-text bg-linear-to-r from-[#FBBF24] via-[#FB7185] to-[#1aff35]">resumes!</span></h1>
             {isProcessing ? (
-              <>
-                <h2>{statusText}</h2>
-                <img src="/images/resume-scan.gif" className="w-full" />
-              </>
+              <div className='w-full rounded-3xl bg-white/75 p-8 shadow-md'>
+                <LoadingSpinner label={statusText} className='py-8' />
+              </div>
             ) : (
               <h2>we review it, provide ATS score, and give improvement tips to land your dream job.</h2>
             )}

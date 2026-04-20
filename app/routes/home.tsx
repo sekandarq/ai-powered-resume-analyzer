@@ -4,10 +4,13 @@ import { Sparkles } from "lucide-react";
 import { usePuterStore } from "~/lib/puter";
 import { Link, useNavigate } from "react-router";
 import React, { useEffect, useState } from "react";
+import LoadingSpinner from "~/components/LoadingSpinner";
+import { useToastStore } from "~/lib/toast";
 
 export default function Home() {
   const { auth, isLoading, kv } = usePuterStore();
   const navigate = useNavigate();
+  const addToast = useToastStore((state) => state.addToast);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,13 +53,18 @@ export default function Home() {
       } catch (err) {
         console.error(err);
         setError("Failed to load your resumes. Please try again.");
+        addToast({
+          type: "error",
+          title: "Could not load resumes",
+          description: "Please refresh and try again.",
+        });
       } finally {
         setLoadingResumes(false);
       }
     };
 
     loadResumes();
-  }, [isLoading, auth.isAuthenticated, kv]);
+  }, [isLoading, auth.isAuthenticated, kv, addToast]);
 
   const showEmpty = !loadingResumes && resumes.length === 0;
 
@@ -94,17 +102,8 @@ export default function Home() {
         )}
 
         {loadingResumes ? (
-          <div className="resumes-section">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="resume-card animate-pulse bg-gray-100 border border-gray-200"
-              >
-                <div className="h-6 bg-gray-200 rounded w-3/4" />
-                <div className="h-6 bg-gray-200 rounded w-1/2" />
-                <div className="h-64 bg-gray-200 rounded-2xl mt-4" />
-              </div>
-            ))}
+          <div className="w-full rounded-2xl bg-white/80 p-8 shadow-sm">
+            <LoadingSpinner label="Loading your resume analyses..." className="py-10" />
           </div>
         ) : showEmpty ? (
           <div className="flex flex-col items-center gap-4 bg-white/70 rounded-2xl p-8 shadow">
