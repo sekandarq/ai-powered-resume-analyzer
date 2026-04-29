@@ -19,7 +19,8 @@ const PRIVACY_NOTICE_ACCEPTED_KEY = "resumatch-privacy-notice-v2-accepted";
 export const meta = () =>
   buildMeta(
     "ResuMatch | AI Resume Analyzer",
-    "Analyze ATS readiness, keyword fit, resume structure, and interview signals in a polished AI-powered dashboard."
+    "Analyze ATS readiness, keyword fit, resume structure, and interview signals in a polished AI-powered dashboard.",
+    { path: "/" }
   );
 
 export default function Home() {

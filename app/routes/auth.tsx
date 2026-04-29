@@ -9,7 +9,8 @@ import { buildMeta } from '~/lib/meta';
 export const meta = () =>
     buildMeta(
         "ResuMatch | Login",
-        "Log into ResuMatch to create, save, and review AI-powered resume analyses."
+        "Log into ResuMatch to create, save, and review AI-powered resume analyses.",
+        { path: "/auth", noIndex: true }
     );
 
 const Auth = () => {

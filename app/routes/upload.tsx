@@ -28,7 +28,8 @@ const USAGE_REMINDER_SEEN_KEY = "resumatch-usage-reminder-seen";
 export const meta = () =>
   buildMeta(
     "ResuMatch | Upload Resume",
-    "Upload a resume and job description to generate ATS, keyword, content, structure, and interview feedback."
+    "Upload a resume and job description to generate ATS, keyword, content, structure, and interview feedback.",
+    { path: "/upload", noIndex: true }
   );
 
 const extractJsonText = (value: string) => {

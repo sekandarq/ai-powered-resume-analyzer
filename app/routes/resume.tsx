@@ -26,7 +26,8 @@ import { cn } from "~/lib/utils";
 export const meta = () =>
     buildMeta(
         "ResuMatch | Resume Review",
-        "Review ATS score, keyword alignment, prioritized fixes, and interview preparation for a saved resume analysis."
+        "Review ATS score, keyword alignment, prioritized fixes, and interview preparation for a saved resume analysis.",
+        { path: "/resume", noIndex: true }
     );
 
 const makeActionId = (category: string, index: number, text: string) =>
