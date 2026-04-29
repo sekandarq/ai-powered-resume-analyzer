@@ -4,7 +4,9 @@ const LINKEDIN_URL = "https://www.linkedin.com/in/mohamad-aliff-iskandar/";
 
 const SiteFooter = () => (
   <footer className="site-footer">
-    <p>Built &amp; Deployed By Aliff Iskandar</p>
+    <p>Designed &amp; Built By Aliff Iskandar with React.js, Puter.js, and Tailwind CSS.
+
+</p>
 
     <a
       href={LINKEDIN_URL}
