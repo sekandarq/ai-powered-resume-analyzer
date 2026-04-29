@@ -4,14 +4,6 @@ ResuMatch is an AI-powered resume analysis web app that helps job seekers compar
 
 The app is built as a portfolio-ready product demo with a no-login sample analysis path, plus an authenticated workflow for creating saved analyses through Puter.
 
-## Why I Built This
-
-I built ResuMatch to solve a practical problem many job seekers face: resume feedback is often too generic, too slow, or disconnected from the actual role they want. A resume can look polished but still miss ATS keywords, bury the strongest evidence, or fail to connect experience to a specific job description.
-
-This project let me explore how AI can become a focused product workflow instead of a simple chat interface. The goal was to turn resume review into a structured experience with clear inputs, category-level scoring, prioritized action items, and a dashboard that helps users decide what to fix first.
-
-From an engineering perspective, ResuMatch also gave me a chance to build a production-style React Router app with authentication, file upload, PDF processing, AI integration, persistent saved analyses, responsive UI, privacy notices, and a no-login demo route for portfolio reviewers.
-
 ## Features
 
 - Role-targeted resume analysis using a pasted or image-extracted job description.
@@ -87,18 +79,6 @@ Create a production build:
 ```bash
 npm run build
 ```
-
-## Deployment
-
-The project uses the Vercel React Router preset and can be deployed to Vercel.
-
-Before sharing the live URL publicly:
-
-- Confirm `/sample-analysis` loads without login.
-- Confirm authenticated upload works with a test Puter account.
-- Confirm PDF conversion works in the deployed browser environment.
-- Confirm AI usage notices appear before analysis.
-- Use sample or test resumes only during demos.
 
 ## Privacy Notes
 
