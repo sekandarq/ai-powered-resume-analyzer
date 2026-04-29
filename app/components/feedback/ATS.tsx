@@ -1,4 +1,4 @@
-import React from 'react'
+import { AlertTriangle, CheckCircle2, FileSearch } from 'lucide-react';
 
 interface Suggestion {
   type: "good" | "improve";
@@ -10,66 +10,86 @@ interface ATSProps {
   suggestions: Suggestion[];
 }
 
-const ATS: React.FC<ATSProps> = ({ score, suggestions }) => {
-  // Determine background gradient based on score
-  const gradientClass = score > 69
-    ? 'from-green-100'
-    : score > 40
-      ? 'from-yellow-100'
-      : 'from-red-100';
-
-  // Determine icon based on score
-  const iconSrc = score > 69
-    ? '/icons/ats-good.svg'
-    : score > 40
-      ? '/icons/ats-warning.svg'
-      : '/icons/ats-bad.svg';
-
-  // Determine subtitle based on score
+const ATS = ({ score, suggestions }: ATSProps) => {
+  const boundedScore = Math.max(0, Math.min(100, score));
   const subtitle = score > 69
-    ? 'Great Job!'
+    ? 'Strong ATS Position'
     : score > 40
-      ? 'Good Start'
-      : 'Needs Improvement';
+      ? 'Competitive But Needs Tuning'
+      : 'Critical ATS Gaps Found';
+
+  const improvements = suggestions.filter((suggestion) => suggestion.type === 'improve').slice(0, 4);
+  const strengths = suggestions.filter((suggestion) => suggestion.type === 'good').slice(0, 4);
+
+  const toneClass = score > 69
+    ? 'border-emerald-200 bg-emerald-50/70'
+    : score > 40
+      ? 'border-amber-200 bg-amber-50/70'
+      : 'border-rose-200 bg-rose-50/70';
+
+  const progressClass = score > 69
+    ? 'bg-emerald-500'
+    : score > 40
+      ? 'bg-amber-500'
+      : 'bg-rose-500';
 
   return (
-    <div className={`bg-linear-to-b ${gradientClass} to-white rounded-2xl shadow-md w-full p-6`}>
-      {/* Top section with icon and headline */}
-      <div className="flex items-center gap-4 mb-6">
-        <img src={iconSrc} alt="ATS Score Icon" className="w-16 h-16" />
-        <div>
-          <h2 className="text-2xl font-bold">ATS Score - {score}/100</h2>
-          <p className='text-xl text-gray-600'>
-             This score represents the overall quality of your resume based on various factors listed below.
-          </p>
-        </div>
-      </div>
-
-      {/* Description section */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4 ">Feedback: {subtitle}</h2>
-
-        {/* Suggestions list */}
-        <div className="space-y-3">
-          {suggestions.map((suggestion, index) => (
-            <div key={index} className="flex items-start gap-3 text-lg">
-              <img
-                src={suggestion.type === "good" ? "/icons/check.svg" : "/icons/warning.svg"}
-                alt={suggestion.type === "good" ? "Check" : "Warning"}
-                className="w-8 h-8 mb-1"
-              />
-              <p className={suggestion.type === "good" ? "text-green-700" : "text-amber-700"}>
-                {suggestion.tip}
-              </p>
+    <div className={`glass-panel w-full ${toneClass}`}>
+      <div className="flex flex-col gap-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 flex size-10 items-center justify-center rounded-2xl border border-white/80 bg-white/80 text-slate-700">
+              <FileSearch className="size-5" />
             </div>
-          ))}
+            <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">ATS Readiness</p>
+            <h2 className="text-2xl font-bold text-slate-900">{subtitle}</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Prioritize parsing clarity, role keywords, and simple resume structure.
+            </p>
+            </div>
+          </div>
+          <p className="text-3xl font-extrabold text-slate-900">{boundedScore}<span className="text-base font-semibold text-slate-500">/100</span></p>
         </div>
-      </div>
 
-      {/* Closing encouragement */}
-      <p className="text-gray-800 italic text-lg">
-        Keep refining your resume to improve your chances of getting past ATS filters and into the hands of recruiters.
-      </p>
+        <div className="h-3 w-full overflow-hidden rounded-full bg-white/80">
+          <div className={`h-full rounded-full transition-all duration-700 ${progressClass}`} style={{ width: `${boundedScore}%` }} />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-rose-100 bg-white/80 p-4">
+            <p className="text-sm font-semibold text-rose-700">Fix Next</p>
+            <ul className="mt-3 space-y-2">
+              {improvements.length ? improvements.map((item, index) => (
+                <li key={`${item.tip}-${index}`} className="flex items-start gap-2 text-sm text-slate-700">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+                  <span>{item.tip}</span>
+                </li>
+              )) : (
+                <li className="text-sm text-slate-600">No urgent ATS fixes identified.</li>
+              )}
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-emerald-100 bg-white/80 p-4">
+            <p className="text-sm font-semibold text-emerald-700">Already Strong</p>
+            <ul className="mt-3 space-y-2">
+              {strengths.length ? strengths.map((item, index) => (
+                <li key={`${item.tip}-${index}`} className="flex items-start gap-2 text-sm text-slate-700">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <span>{item.tip}</span>
+                </li>
+              )) : (
+                <li className="text-sm text-slate-600">Strength details will appear after more analyses.</li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        <p className="text-sm text-slate-600">
+          Focus on the highest-impact fixes first, then re-run analysis to validate ATS improvement.
+        </p>
+      </div>
     </div>
   )
 }

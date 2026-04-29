@@ -25,52 +25,61 @@ const ResumeCard = ({
   const jobSummary =
     jobDescription?.trim() ||
     "No job description saved. Open the analysis to add one.";
+  const title = [jobTitle, companyName && `at ${companyName}`].filter(Boolean).join(" ");
 
   return (
-    <Link
-      to={`/resume/${id}`}
-      className="resume-card animate-in fade-in duration-1000"
-    >
-      <div className="resume-card-header">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-black! font-bold wrap-break-words">
-            {companyName}
-          </h2>
-          <h3 className="text-lg wrap-break-word text-gray-700">{jobTitle}</h3>
+    <article className="resume-card relative animate-in fade-in duration-1000">
+      <Link
+        to={`/resume/${id}`}
+        className="absolute inset-0 z-0 rounded-[28px]"
+        aria-label={`Open saved analysis${title ? ` for ${title}` : ""}`}
+      />
+
+      <div className="resume-card-header relative z-10 pointer-events-none">
+        <div className="flex flex-col gap-3">
+          <span className="step-chip w-fit">Saved analysis</span>
+          <div>
+            <h2 className="font-bold break-words text-slate-950">
+              {companyName}
+            </h2>
+            <h3 className="mt-1 text-lg break-words text-slate-600">{jobTitle}</h3>
+          </div>
         </div>
         <div className="shrink-0">
           <ScoreCircle score={feedback.overallScore} />
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 gradient-border animate-in fade-in duration-1000 h-full">
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="text-sm text-gray-600 font-semibold mb-1">
+      <div className="gradient-border pointer-events-none relative z-10 h-full animate-in fade-in duration-1000">
+        <div className="flex h-full flex-col gap-3 rounded-[23px] bg-white/82 p-4">
+        <div className="rounded-[20px] border border-slate-200/70 bg-white/92 p-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.4)]">
+          <p className="mb-1 text-sm font-semibold text-slate-600">
             Job description (summary)
           </p>
-          <p className="text-base text-gray-800 leading-relaxed">
+          <p className="text-base leading-relaxed text-slate-800">
             {truncate(jobSummary)}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm flex flex-col gap-2">
-          <p className="text-sm text-gray-600 font-semibold">
+        <div className="flex flex-1 flex-col gap-2 rounded-[20px] border border-slate-200/70 bg-white/92 p-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.4)]">
+          <p className="text-sm font-semibold text-slate-600">
             Top improvements
           </p>
           {improvementTips.length ? (
-            <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
+            <ul className="list-disc space-y-2 pl-5 text-sm text-slate-800">
               {improvementTips.map((tip, idx) => (
                 <li key={`${id}-tip-${idx}`}>{tip}</li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500">
               No improvement tips captured. Open the analysis to view details.
             </p>
           )}
         </div>
+        </div>
       </div>
-    </Link>
+    </article>
   );
 };
 

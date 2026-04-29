@@ -1,35 +1,150 @@
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
+import { ChevronDown, ExternalLink, LogOut, Plus, UserCircle2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePuterStore } from "~/lib/puter";
-import Button, { buttonVariants } from "~/components/ui/Button";
+import { buttonVariants } from "~/components/ui/Button";
 import { cn } from "~/lib/utils";
 
 const Navbar = () => {
   const { auth } = usePuterStore();
+  const location = useLocation();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, []);
+
+  const primaryCta =
+    location.pathname === "/upload"
+      ? { to: "/upload", label: "Analyze Resume" }
+      : { to: "/upload", label: "Start Analysis" };
+
+  const user = auth.user;
+  const initials = useMemo(() => {
+    const source = user?.username?.trim() || "Guest";
+    return source.slice(0, 2).toUpperCase();
+  }, [user?.username]);
 
   return (
-    <nav className="navbar">
+    <nav className={cn("navbar", "navbar-premium", isScrolled && "navbar-scrolled")}>
       <Link to="/" className="group flex items-center gap-3">
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-cyan-300 via-teal-300 to-lime-300 text-slate-900 shadow-md ring-1 ring-white/70">
-          RM
+        <span className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-[18px] shadow-[0_18px_34px_-18px_rgba(13,148,136,0.65)] ring-1 ring-white/70 transition duration-200 group-hover:-translate-y-0.5">
+          <img src="/icons/resumatch-mark.svg" alt="" className="h-full w-full" aria-hidden="true" />
         </span>
-        <div>
-          <p className="text-xl font-extrabold tracking-tight text-gradient">ResuMatch</p>
-          <p className="text-xs text-slate-600 transition group-hover:text-slate-800">AI Resume Intelligence</p>
+        <div className="text-left">
+          <p className="text-xl font-extrabold tracking-[-0.04em] text-gradient">ResuMatch</p>
         </div>
       </Link>
 
       <div className="flex items-center gap-2 sm:gap-3">
         <Link
-          to="/upload"
+          to={primaryCta.to}
           className={cn(buttonVariants({ variant: "primary", size: "md" }), "whitespace-nowrap")}
         >
-          Upload Resume
+          <Plus className="h-4 w-4" />
+          {primaryCta.label}
         </Link>
-        {auth.isAuthenticated && (
-          <Button type="button" onClick={auth.signOut} variant="secondary" className="whitespace-nowrap">
-            Log out
-          </Button>
-        )}
+
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            className="account-trigger"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+          >
+            <span className="account-avatar">{auth.isAuthenticated ? initials : <UserCircle2 className="h-4 w-4" />}</span>
+            <span className="hidden min-w-0 text-left sm:block">
+              <span className="block truncate text-sm font-semibold text-slate-900">
+                {auth.isAuthenticated ? user?.username : "Guest"}
+              </span>
+              <span className="block text-[11px] uppercase tracking-[0.14em] text-slate-500">
+                {auth.isAuthenticated ? "Account" : "Session"}
+              </span>
+            </span>
+            <ChevronDown className={cn("h-4 w-4 text-slate-500 transition", menuOpen && "rotate-180")} />
+          </button>
+
+          {menuOpen && (
+            <div className="account-menu" role="menu">
+              <div className="account-menu-head">
+                <span className="account-avatar h-10 w-10 shrink-0">{auth.isAuthenticated ? initials : <UserCircle2 className="h-5 w-5" />}</span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-950">
+                    {auth.isAuthenticated ? user?.username : "Guest session"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {auth.isAuthenticated ? "Signed in to your workspace" : "Sign in to save and manage analyses"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="account-menu-divider" />
+
+              <div className="account-menu-meta">
+                <div className="account-meta-row">
+                  <span className="account-meta-label">Status</span>
+                  <span className="account-status">
+                    <span className="account-status-dot" />
+                    {auth.isAuthenticated ? "Connected" : "Guest"}
+                  </span>
+                </div>
+                {auth.isAuthenticated && (
+                  <a
+                    href="https://puter.com/dashboard"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    role="menuitem"
+                    className="account-dashboard-link"
+                  >
+                    <span>Check Usage & Balance</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+
+              <div className="account-menu-divider" />
+
+              <div className="account-menu-body">
+                {auth.isAuthenticated ? (
+                  <button type="button" role="menuitem" className="account-menu-item" onClick={auth.signOut}>
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                ) : (
+                  <button type="button" role="menuitem" className="account-menu-item" onClick={auth.signIn}>
+                    <UserCircle2 className="h-4 w-4" />
+                    Sign in
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );

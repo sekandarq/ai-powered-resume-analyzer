@@ -9,24 +9,22 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import { usePuterStore } from "./lib/puter";
 import ToastContainer from "./components/ToastContainer";
 
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", href: "/favicon.ico", sizes: "any" },
+  { rel: "icon", href: "/icons/resumatch-mark.svg", type: "image/svg+xml" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
     href: "https://fonts.gstatic.com",
     crossOrigin: "anonymous",
   },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children }: { children: ReactNode }) {
   const {init} = usePuterStore();
 
   useEffect(() => {

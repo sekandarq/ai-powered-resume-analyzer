@@ -8,6 +8,20 @@ interface Resume {
     feedback: Feedback;
 }
 
+interface ActionItem {
+    id: string;
+    category: "ats" | "keywords" | "content" | "structure" | "tone" | "skills";
+    priority: "critical" | "important" | "minor" | "strength";
+    effort: "quick" | "moderate" | "deep";
+    title: string;
+    issue: string;
+    recommendation: string;
+    reason: string;
+    beforeText?: string;
+    suggestedRewrite?: string;
+    keywordsToAdd?: string[];
+}
+
 interface Feedback {
     overallScore: number; // max 100
     ATS: {
@@ -59,4 +73,6 @@ interface Feedback {
             answerGuidance: string;
         }[];
     };
+
+    actionItems?: ActionItem[];
 }

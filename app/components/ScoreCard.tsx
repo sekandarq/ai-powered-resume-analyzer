@@ -2,7 +2,7 @@ interface ScoreCardProps {
   score: number;
 }
 
-const ScoreCard: React.FC<ScoreCardProps> = ({ score }) => {
+const ScoreCard = ({ score }: ScoreCardProps) => {
   let badgeColor = '';
   let badgeText = '';
 

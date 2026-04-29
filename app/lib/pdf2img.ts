@@ -5,21 +5,18 @@ export interface PdfConversionResult {
 }
 
 let pdfjsLib: any = null;
-let isLoading = false;
 let loadPromise: Promise<any> | null = null;
 
 async function loadPdfJs(): Promise<any> {
   if (pdfjsLib) return pdfjsLib;
   if (loadPromise) return loadPromise;
 
-  isLoading = true;
   // @ts-expect-error - pdfjs-dist/build/pdf.mjs is not a module
   loadPromise = import("pdfjs-dist/build/pdf.mjs").then((lib) => {
     //worker source to use local file
     const workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
     lib.GlobalWorkerOptions.workerSrc = workerSrc;
     pdfjsLib = lib;
-    isLoading = false;
     return lib;
   });
 
@@ -83,4 +80,11 @@ export async function convertPdfToImage(
       error: `Failed to convert PDF: ${err}`,
     };
   }
+}
+
+export async function getPdfPageCount(file: File): Promise<number> {
+  const lib = await loadPdfJs();
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
+  return pdf.numPages as number;
 }

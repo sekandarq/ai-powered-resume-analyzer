@@ -1,5 +1,5 @@
- import type { ReactNode } from "react";
-import React, { createContext, useContext, useState } from "react";
+import type { ReactNode } from "react";
+import { createContext, useContext, useState } from "react";
 import { cn } from "~/lib/utils";
 
 interface AccordionContextType {
@@ -27,12 +27,12 @@ interface AccordionProps {
   className?: string;
 }
 
-export const Accordion: React.FC<AccordionProps> = ({
+export const Accordion = ({
   children,
   defaultOpen,
   allowMultiple = false,
   className = "",
-}) => {
+}: AccordionProps) => {
   const [activeItems, setActiveItems] = useState<string[]>(
     defaultOpen ? [defaultOpen] : []
   );
@@ -66,11 +66,10 @@ interface AccordionItemProps {
   className?: string;
 }
 
-export const AccordionItem: React.FC<AccordionItemProps> = ({
-  id,
+export const AccordionItem = ({
   children,
   className = "",
-}) => {
+}: AccordionItemProps) => {
   return (
     <div className={`overflow-hidden border-b border-gray-200 ${className}`}>
       {children}
@@ -86,13 +85,13 @@ interface AccordionHeaderProps {
   iconPosition?: "left" | "right";
 }
 
-export const AccordionHeader: React.FC<AccordionHeaderProps> = ({
+export const AccordionHeader = ({
   itemId,
   children,
   className = "",
   icon,
   iconPosition = "right",
-}) => {
+}: AccordionHeaderProps) => {
   const { toggleItem, isItemActive } = useAccordion();
   const isActive = isItemActive(itemId);
 
@@ -144,11 +143,11 @@ interface AccordionContentProps {
   className?: string;
 }
 
-export const AccordionContent: React.FC<AccordionContentProps> = ({
+export const AccordionContent = ({
   itemId,
   children,
   className = "",
-}) => {
+}: AccordionContentProps) => {
   const { isItemActive } = useAccordion();
   const isActive = isItemActive(itemId);
 

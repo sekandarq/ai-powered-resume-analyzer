@@ -1,0 +1,22 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ResuMatch mark</title>
+  <desc id="desc">A resume document with a check mark and analysis lens.</desc>
+  <rect width="96" height="96" rx="24" fill="url(#bg)"/>
+  <path d="M28 18H58L72 32V72C72 76.4183 68.4183 80 64 80H28C23.5817 80 20 76.4183 20 72V26C20 21.5817 23.5817 18 28 18Z" fill="white" fill-opacity="0.96"/>
+  <path d="M58 18V30C58 32.2091 59.7909 34 62 34H72" fill="#CCFBF1"/>
+  <path d="M58 18V30C58 32.2091 59.7909 34 62 34H72" stroke="#0F766E" stroke-opacity="0.24" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M31 42H53" stroke="#0F172A" stroke-opacity="0.76" stroke-width="5" stroke-linecap="round"/>
+  <path d="M31 54H48" stroke="#0F766E" stroke-opacity="0.6" stroke-width="5" stroke-linecap="round"/>
+  <path d="M31 66H42" stroke="#65A30D" stroke-opacity="0.62" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="59" cy="58" r="12" fill="#ECFDF5" stroke="#0F766E" stroke-width="5"/>
+  <path d="M53.5 58.5L57.5 62.5L65.5 53.5" stroke="#65A30D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M67.5 67.5L76 76" stroke="#0F172A" stroke-width="6" stroke-linecap="round"/>
+  <path d="M24 18.5C35.5 10.5 55.5 9 72 25.5" stroke="white" stroke-opacity="0.42" stroke-width="3" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="bg" x1="13" y1="7" x2="86" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F766E"/>
+      <stop offset="0.52" stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#84CC16"/>
+    </linearGradient>
+  </defs>
+</svg>

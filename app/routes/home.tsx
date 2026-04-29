@@ -1,29 +1,43 @@
 import Navbar from "~/components/Navbar";
 import ResumeCard from "~/components/ResumeCard";
-import { Sparkles } from "lucide-react";
+import { ShieldCheck, Sparkles, X } from "lucide-react";
 import { usePuterStore } from "~/lib/puter";
-import { Link, useNavigate } from "react-router";
-import React, { useEffect, useState } from "react";
+import { Link } from "react-router";
+import { useEffect, useState } from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { useToastStore } from "~/lib/toast";
 import Card from "~/components/ui/Card";
 import Alert from "~/components/ui/Alert";
 import { buttonVariants } from "~/components/ui/Button";
 import { cn } from "~/lib/utils";
+import UsageCostTable from "~/components/UsageCostTable";
+import SiteFooter from "~/components/SiteFooter";
+import { buildMeta } from "~/lib/meta";
+
+const PRIVACY_NOTICE_ACCEPTED_KEY = "resumatch-privacy-notice-v2-accepted";
+
+export const meta = () =>
+  buildMeta(
+    "ResuMatch | AI Resume Analyzer",
+    "Analyze ATS readiness, keyword fit, resume structure, and interview signals in a polished AI-powered dashboard."
+  );
 
 export default function Home() {
   const { auth, isLoading, kv } = usePuterStore();
-  const navigate = useNavigate();
   const addToast = useToastStore((state) => state.addToast);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPrivacyNotice, setShowPrivacyNotice] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !auth.isAuthenticated) {
-      navigate("/auth?next=/");
+    if (typeof window === "undefined") return;
+
+    const accepted = window.localStorage.getItem(PRIVACY_NOTICE_ACCEPTED_KEY);
+    if (!accepted) {
+      setShowPrivacyNotice(true);
     }
-  }, [isLoading, auth.isAuthenticated, navigate]);
+  }, []);
 
   useEffect(() => {
     const loadResumes = async () => {
@@ -71,6 +85,11 @@ export default function Home() {
   }, [isLoading, auth.isAuthenticated, kv, addToast]);
 
   const showEmpty = !loadingResumes && resumes.length === 0;
+  const startAnalysisHref = auth.isAuthenticated ? "/upload" : "/auth?next=/upload";
+  const acceptPrivacyNotice = () => {
+    window.localStorage.setItem(PRIVACY_NOTICE_ACCEPTED_KEY, "true");
+    setShowPrivacyNotice(false);
+  };
 
   return (
     <main className="app-shell">
@@ -84,16 +103,65 @@ export default function Home() {
           </div>
 
           <h1>
-            Welcome to ResuMatch,<br /> Turn your resume into a
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-[#FBBF24] via-[#FB7185] to-[#1aff35]">
+            Turn every resume into a
+            <span className="text-gradient">
               {' '}high-conversion profile.
             </span>
           </h1>
 
-          <p className="max-w-3xl text-base text-slate-600 sm:text-lg">
-            Analyze ATS readiness, keyword fit, and interview prep signals in one flow.
-            Iterate faster with clear strengths, gaps, and next actions.
+          <p className="max-w-4xl text-base leading-7 text-slate-600 sm:text-lg">
+            Your resume might be <span className="font-bold text-red-500">costing you interviews</span> without you realizing it.
+            Discover exactly what recruiters and ATS systems see, fix what is holding you back, and turn your <span className="font-bold text-green-600">application</span> into one that gets <span className="font-bold text-green-600">noticed</span>.          
           </p>
+          <div className="grid w-full gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <Card className="glass-panel premium-glass text-left">
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Product Snapshot</p>
+                    <h2 className="mt-2 text-2xl font-bold text-slate-950">One <span className="text-gradient-highlight">workspace</span> for role-targeted resume reviews</h2>
+                  </div>
+                  <span className="step-chip"><span className="dot">Live</span> AI-guided</span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-[22px] border border-slate-200/70 bg-white/92 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">ATS Fit</p>
+                    <p className="mt-2 text-2xl font-bold tracking-[-0.04em] text-slate-950">Instant</p>
+                    <p className="mt-2 text-sm text-slate-600">Spot scanability, structure issues, and formatting risks.</p>
+                  </div>
+                  <div className="rounded-[22px] border border-slate-200/70 bg-white/92 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Keyword Match</p>
+                    <p className="mt-2 text-2xl font-bold tracking-[-0.04em] text-slate-950">Role-based</p>
+                    <p className="mt-2 text-sm text-slate-600">Compare your resume against the actual job context.</p>
+                  </div>
+                  <div className="rounded-[22px] border border-slate-200/70 bg-white/92 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Next Actions</p>
+                    <p className="mt-2 text-2xl font-bold tracking-[-0.04em] text-slate-950">Focused</p>
+                    <p className="mt-2 text-sm text-slate-600">Prioritize the highest-impact edits before you reapply.</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="glass-panel premium-glass text-left">
+              <div className="flex h-full flex-col justify-between gap-5">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">What You Get</p>
+                  <h2 className="mt-2 text-2xl font-bold text-slate-950">A more <span className="text-gradient-highlight">credible</span>, recruiter-ready resume loop</h2>
+                </div>
+                <div className="space-y-3">
+                  <div className="rounded-[20px] border border-slate-200/70 bg-white/90 p-4">
+                    <p className="text-sm font-semibold text-slate-950">Sharper scoring</p>
+                    <p className="mt-1 text-sm text-slate-600">See overall quality and category-level performance in one glance.</p>
+                  </div>
+                  <div className="rounded-[20px] border border-slate-200/70 bg-white/90 p-4">
+                    <p className="text-sm font-semibold text-slate-950">Cleaner iteration</p>
+                    <p className="mt-1 text-sm text-slate-600">Move from generic edits to job-specific improvements.</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
 
           <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="feature-stat stagger-rise delay-1">
@@ -111,10 +179,22 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
+            <Link
+              to={startAnalysisHref}
+              className={cn(buttonVariants({ variant: "primary", size: "lg" }), "min-w-48 text-center")}
+            >
+              Start new analysis
+            </Link>
+            <Link
+              to="/sample-analysis"
+              className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "min-w-48 text-center")}
+            >
+              View sample analysis
+            </Link>
             {resumes.length > 0 && (
               <Link
                 to={`/resume/${resumes[0].id}`}
-                className={cn(buttonVariants({ variant: "secondary", size: "md" }), "max-w-xs text-center")}
+                className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "min-w-48 text-center")}
               >
                 View latest analysis
               </Link>
@@ -124,11 +204,11 @@ export default function Home() {
 
         <Card className="w-full stagger-rise delay-1">
           <div className="flex flex-col gap-4">
-            <h3 className="text-left text-lg font-bold text-slate-900">How it works</h3>
+            <h3 className="text-left text-lg font-bold tracking-[-0.03em] text-slate-950">How it works</h3>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div className="glass-panel text-left">
                 <span className="step-chip"><span className="dot">1</span> Add Job Context</span>
-                <p className="mt-3 text-sm text-slate-600">Paste text, upload screenshot, or fetch from a link to anchor your analysis.</p>
+                <p className="mt-3 text-sm text-slate-600">Paste text or upload a screenshot to anchor your analysis.</p>
               </div>
               <div className="glass-panel text-left">
                 <span className="step-chip"><span className="dot">2</span> Upload Resume</span>
@@ -148,13 +228,29 @@ export default function Home() {
           </Alert>
         )}
 
-        {loadingResumes ? (
+        {!auth.isAuthenticated && !isLoading ? (
+          <Card className="flex flex-col items-center gap-4 text-center">
+            <ShieldCheck className="h-8 w-8 text-teal-700" />
+            <div>
+              <p className="text-xl font-semibold text-slate-950">Sign in to create and save analyses</p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                You can browse the product publicly. Uploading resumes and saving feedback require an account.
+              </p>
+            </div>
+            <Link to="/auth?next=/upload" className={cn(buttonVariants({ variant: "primary", size: "lg" }), "max-w-xs text-center")}>
+              Sign in to start
+            </Link>
+            <Link to="/sample-analysis" className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "max-w-xs text-center")}>
+              View sample analysis
+            </Link>
+          </Card>
+        ) : loadingResumes ? (
           <Card className="w-full">
             <LoadingSpinner label="Loading your resume analyses..." className="py-10" />
           </Card>
         ) : showEmpty ? (
-          <Card className="flex flex-col items-center gap-4">
-            <p className="text-xl text-gray-700 text-center">
+          <Card className="flex flex-col items-center gap-4 text-center">
+            <p className="text-xl text-slate-700">
               No analyses yet. Upload your first resume to get tailored feedback.
             </p>
             <Link to="/upload" className={cn(buttonVariants({ variant: "primary", size: "lg", fullWidth: true }), "max-w-xs text-center")}>
@@ -164,11 +260,89 @@ export default function Home() {
         ) : (
           <div className="resumes-section">
             {resumes.map((resume) => (
-              <ResumeCard key={resume.id} resume={resume} />
+              <ResumeCard
+                key={resume.id}
+                resume={resume}
+              />
             ))}
           </div>
         )}
       </section>
+
+      <SiteFooter />
+
+      {showPrivacyNotice && (
+        <div className="notice-modal" role="dialog" aria-modal="true" aria-label="Privacy and disclaimer notice">
+          <div className="notice-backdrop" />
+          <div className="notice-dialog">
+            <button
+              type="button"
+              className="notice-close-button"
+              aria-label="Close notice"
+              onClick={acceptPrivacyNotice}
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] bg-teal-50 text-teal-700">
+                <ShieldCheck className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Before You Upload</p>
+                <h2 className="text-2xl font-bold text-slate-950">Privacy and AI disclaimer</h2>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 text-sm leading-6 text-slate-700">
+              <p>
+                ResuMatch analyzes resumes and job descriptions you provide. Resume files, generated previews, job context,
+                and feedback are stored in your signed-in Puter workspace so you can revisit them later.
+              </p>
+              <p>
+                AI feedback can be incomplete or incorrect. Treat suggestions as guidance, not a guarantee of hiring results,
+                legal compliance, or career outcomes. Review edits before using them in real applications.
+              </p>
+              <p>
+                Avoid uploading documents that contain information you do not want processed, such as national ID numbers,
+                financial details, medical data, or other highly sensitive personal information.
+              </p>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50/80 p-4 text-sm leading-6 text-amber-900">
+              By continuing, you acknowledge that uploaded content may be processed by third-party AI/storage services through Puter
+              and that you are responsible for checking the final resume.
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">Estimated Puter usage</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Each analysis may consume resources from your connected Puter account. Actual cost depends on resume length,
+                  job description length, and model pricing.
+                </p>
+              </div>
+              <UsageCostTable />
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "sm:min-w-40")}
+                onClick={acceptPrivacyNotice}
+              >
+                Browse only
+              </button>
+              <Link
+                to="/auth?next=/upload"
+                className={cn(buttonVariants({ variant: "primary", size: "lg" }), "text-center sm:min-w-44")}
+                onClick={acceptPrivacyNotice}
+              >
+                Accept and sign in
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
