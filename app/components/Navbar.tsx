@@ -51,19 +51,19 @@ const Navbar = () => {
 
   return (
     <nav className={cn("navbar", "navbar-premium", isScrolled && "navbar-scrolled")}>
-      <Link to="/" className="group flex items-center gap-3">
-        <span className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-[18px] shadow-[0_18px_34px_-18px_rgba(13,148,136,0.65)] ring-1 ring-white/70 transition duration-200 group-hover:-translate-y-0.5">
+      <Link to="/" className="group flex min-w-0 items-center gap-2 sm:gap-3">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[16px] shadow-[0_18px_34px_-18px_rgba(13,148,136,0.65)] ring-1 ring-white/70 transition duration-200 group-hover:-translate-y-0.5 sm:h-11 sm:w-11 sm:rounded-[18px]">
           <img src="/icons/resumatch-mark.svg" alt="" className="h-full w-full" aria-hidden="true" />
         </span>
-        <div className="text-left">
-          <p className="text-xl font-extrabold tracking-[-0.04em] text-gradient">ResuMatch</p>
+        <div className="min-w-0 text-left">
+          <p className="truncate text-base font-extrabold tracking-[-0.04em] text-gradient sm:text-xl">ResuMatch</p>
         </div>
       </Link>
 
       <div className="flex items-center gap-2 sm:gap-3">
         <Link
           to={primaryCta.to}
-          className={cn(buttonVariants({ variant: "primary", size: "md" }), "whitespace-nowrap")}
+          className={cn(buttonVariants({ variant: "primary", size: "md" }), "hidden whitespace-nowrap sm:inline-flex")}
         >
           <Plus className="h-4 w-4" />
           {primaryCta.label}
@@ -130,6 +130,10 @@ const Navbar = () => {
               <div className="account-menu-divider" />
 
               <div className="account-menu-body">
+                <Link to="/upload" role="menuitem" className="account-menu-item sm:hidden" onClick={() => setMenuOpen(false)}>
+                  <Plus className="h-4 w-4" />
+                  Start analysis
+                </Link>
                 {auth.isAuthenticated ? (
                   <button type="button" role="menuitem" className="account-menu-item" onClick={auth.signOut}>
                     <LogOut className="h-4 w-4" />
