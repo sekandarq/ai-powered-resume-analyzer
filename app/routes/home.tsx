@@ -1,6 +1,6 @@
 import Navbar from "~/components/Navbar";
 import ResumeCard from "~/components/ResumeCard";
-import { ShieldCheck, Sparkles, X } from "lucide-react";
+import { Eye, ShieldCheck, Sparkles, X } from "lucide-react";
 import { usePuterStore } from "~/lib/puter";
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
@@ -178,27 +178,36 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
-            <Link
-              to={startAnalysisHref}
-              className={cn(buttonVariants({ variant: "primary", size: "lg" }), "min-w-48 text-center")}
-            >
-              Start new analysis
-            </Link>
-            <Link
-              to="/sample-analysis"
-              className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "min-w-48 text-center")}
-            >
-              View sample analysis
-            </Link>
-            {resumes.length > 0 && (
+          <div className="mt-4 flex flex-col items-center gap-3">
+            <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <Link
-                to={`/resume/${resumes[0].id}`}
+                to="/sample-analysis"
+                className={cn(
+                  buttonVariants({ variant: "primary", size: "lg" }),
+                  "min-w-60 gap-2 text-center shadow-[0_22px_42px_-20px_rgba(13,148,136,0.72)]"
+                )}
+              >
+                <Eye className="h-4 w-4" />
+                Browse sample analysis
+              </Link>
+              <Link
+                to={startAnalysisHref}
                 className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "min-w-48 text-center")}
               >
-                View latest analysis
+                Start new analysis
               </Link>
-            )}
+              {resumes.length > 0 && (
+                <Link
+                  to={`/resume/${resumes[0].id}`}
+                  className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "min-w-48 text-center")}
+                >
+                  View latest analysis
+                </Link>
+              )}
+            </div>
+            <p className="text-sm font-medium text-slate-600">
+              Want to look around first? The sample analysis needs no login, upload, or AI usage.
+            </p>
           </div>
         </div>
 
@@ -237,12 +246,18 @@ export default function Home() {
                 You can browse the product publicly. Uploading resumes and saving feedback require an account.
               </p>
             </div>
-            <Link to="/auth?next=/upload" className={cn(buttonVariants({ variant: "primary", size: "lg" }), "max-w-xs text-center")}>
-              Sign in to start
-            </Link>
-            <Link to="/sample-analysis" className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "max-w-xs text-center")}>
-              View sample analysis
-            </Link>
+            <div className="flex w-full max-w-2xl flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Link to="/sample-analysis" className={cn(buttonVariants({ variant: "primary", size: "lg" }), "w-full max-w-xs gap-2 text-center")}>
+                <Eye className="h-4 w-4" />
+                Browse sample analysis
+              </Link>
+              <Link to="/auth?next=/upload" className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "w-full max-w-xs text-center")}>
+                Sign in to start
+              </Link>
+            </div>
+            <p className="max-w-xl text-sm leading-6 text-slate-500">
+              The sample dashboard shows the full product experience without requiring a resume upload or account.
+            </p>
           </Card>
         ) : loadingResumes ? (
           <Card className="w-full">
@@ -294,23 +309,21 @@ export default function Home() {
             </div>
 
             <div className="mt-5 grid gap-3 text-sm leading-6 text-slate-700">
-              <p>
-                ResuMatch analyzes resumes and job descriptions you provide. Resume files, generated previews, job context,
-                and feedback are stored in your signed-in Puter workspace so you can revisit them later.
-              </p>
-              <p>
-                AI feedback can be incomplete or incorrect. Treat suggestions as guidance, not a guarantee of hiring results,
-                legal compliance, or career outcomes. Review edits before using them in real applications.
-              </p>
-              <p>
-                Avoid uploading documents that contain information you do not want processed, such as national ID numbers,
-                financial details, medical data, or other highly sensitive personal information.
-              </p>
+            <p>
+              ResuMatch uses the resume and job details you provide to generate tailored feedback. Your files, job context, previews,
+              and results are saved in your signed-in Puter workspace so you can revisit them later.
+            </p>
+            <p>
+              The feedback is designed to guide and speed up your resume improvement process. Because it is AI-generated, some suggestions
+              may need your review or adjustment before you use them in real applications.
+            </p>
+            <p>
+              To protect your privacy, please avoid uploading highly sensitive information such as ID numbers, financial data, or medical records.
+            </p>            
             </div>
 
             <div className="mt-5 rounded-2xl border border-amber-100 bg-amber-50/80 p-4 text-sm leading-6 text-amber-900">
-              By continuing, you acknowledge that uploaded content may be processed by third-party AI/storage services through Puter
-              and that you are responsible for checking the final resume.
+              By continuing, you agree that your content may be processed through Puter and trusted AI services to generate your analysis.
             </div>
 
             <div className="mt-5 space-y-3">
@@ -325,13 +338,14 @@ export default function Home() {
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "sm:min-w-40")}
+              <Link
+                to="/"
+                className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "gap-2 text-center sm:min-w-56")}
                 onClick={acceptPrivacyNotice}
               >
-                Browse only
-              </button>
+                <Eye className="h-4 w-4" />
+                Browse homepage 
+              </Link>
               <Link
                 to="/auth?next=/upload"
                 className={cn(buttonVariants({ variant: "primary", size: "lg" }), "text-center sm:min-w-44")}
