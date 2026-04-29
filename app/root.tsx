@@ -12,6 +12,7 @@ import "./app.css";
 import { type ReactNode, useEffect } from "react";
 import { usePuterStore } from "./lib/puter";
 import ToastContainer from "./components/ToastContainer";
+import { Analytics } from "@vercel/analytics/react"
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.ico", sizes: "any" },
@@ -46,6 +47,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <ToastContainer />
         <ScrollRestoration />
         <Scripts />
+        <Analytics />
       </body>
     </html>
   );
