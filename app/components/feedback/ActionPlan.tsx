@@ -2,9 +2,13 @@ import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
+  ClipboardCheck,
   Circle,
+  Copy,
+  FileText,
   Filter,
   Lightbulb,
+  MapPin,
   RefreshCw,
   Sparkles,
 } from "lucide-react";
@@ -23,6 +27,10 @@ interface ActionPlanProps {
   items: ActionItem[];
   completedIds: string[];
   onToggle: (id: string) => void;
+  rewriteStates?: Record<string, RewriteProgress>;
+  onCopyRewrite?: (itemId: string, text: string) => void;
+  onApplyRewrite?: (itemId: string, text: string) => void;
+  onViewResume?: () => void;
 }
 
 const priorityStyles: Record<ActionItem["priority"], string> = {
@@ -47,6 +55,18 @@ const categoryLabels: Record<ActionItem["category"], string> = {
   skills: "Skills",
 };
 
+const confidenceStyles: Record<ResumeEvidence["confidence"], string> = {
+  high: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  medium: "border-amber-200 bg-amber-50 text-amber-700",
+  low: "border-slate-200 bg-slate-50 text-slate-600",
+};
+
+const rewriteToneLabels: Record<RewriteVariant["tone"], string> = {
+  concise: "Concise",
+  impact: "Impact",
+  ats: "ATS",
+};
+
 const filterLabels: Array<{ id: ActionFilter; label: string }> = [
   { id: "all", label: "All" },
   { id: "critical", label: "Critical" },
@@ -61,6 +81,10 @@ const ActionPlan = ({
   items,
   completedIds,
   onToggle,
+  rewriteStates = {},
+  onCopyRewrite,
+  onApplyRewrite,
+  onViewResume,
 }: ActionPlanProps) => {
   const [activeFilter, setActiveFilter] = useState<ActionFilter>("all");
   const completedSet = useMemo(() => new Set(completedIds), [completedIds]);
@@ -193,6 +217,15 @@ const ActionPlan = ({
         {filteredItems.length ? (
           filteredItems.map((item) => {
             const isDone = completedSet.has(item.id);
+            const rewriteState = rewriteStates[item.id];
+            const rewriteOptions = [
+              ...(item.suggestedRewrite ? [{ tone: "impact" as const, text: item.suggestedRewrite }] : []),
+              ...(item.rewriteVariants || []),
+            ].filter((option, index, options) => (
+              option.text.trim() &&
+              options.findIndex((candidate) => candidate.text.trim() === option.text.trim()) === index
+            ));
+
             return (
               <article
                 key={item.id}
@@ -257,17 +290,6 @@ const ActionPlan = ({
                       </div>
                     </div>
 
-                    {item.suggestedRewrite && (
-                      <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
-                          Suggested Rewrite
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-emerald-900">
-                          {item.suggestedRewrite}
-                        </p>
-                      </div>
-                    )}
-
                     {item.keywordsToAdd?.length ? (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {item.keywordsToAdd.map((keyword) => (
@@ -280,6 +302,132 @@ const ActionPlan = ({
                         ))}
                       </div>
                     ) : null}
+
+                    {item.evidence && (
+                      <div className="mt-3 rounded-xl border border-sky-100 bg-sky-50/70 p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex items-center gap-1.5 text-sm font-semibold text-sky-900">
+                            <MapPin className="size-4" />
+                            {item.evidence.section ? `Found in ${item.evidence.section}` : "Resume evidence"}
+                          </div>
+                          {item.evidence.page ? (
+                            <span className="rounded-full border border-sky-200 bg-white/80 px-2 py-0.5 text-xs font-semibold text-sky-700">
+                              Page {item.evidence.page}
+                            </span>
+                          ) : null}
+                          <span className={cn(
+                            "rounded-full border px-2 py-0.5 text-xs font-semibold capitalize",
+                            confidenceStyles[item.evidence.confidence]
+                          )}>
+                            {item.evidence.confidence} confidence
+                          </span>
+                        </div>
+
+                        {item.evidence.originalText ? (
+                          <blockquote className="mt-3 rounded-lg border border-white/80 bg-white/80 p-3 text-sm leading-6 text-slate-700">
+                            "{item.evidence.originalText}"
+                          </blockquote>
+                        ) : (
+                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                            No exact resume snippet was identified for this item.
+                          </p>
+                        )}
+
+                        {item.evidence.explanation ? (
+                          <p className="mt-2 text-sm leading-6 text-sky-800">
+                            {item.evidence.explanation}
+                          </p>
+                        ) : null}
+
+                        {onViewResume ? (
+                          <button
+                            type="button"
+                            onClick={onViewResume}
+                            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-white/85 px-3 py-1.5 text-xs font-semibold text-sky-800 transition hover:bg-white"
+                          >
+                            <FileText className="size-3.5" />
+                            View resume
+                          </button>
+                        ) : null}
+                      </div>
+                    )}
+
+                    {(item.beforeText || rewriteOptions.length > 0) && (
+                      <div className="mt-3 rounded-xl border border-teal-100 bg-teal-50/70 p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+                            Before / After Workflow
+                          </p>
+                          {rewriteState?.appliedAt ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-white/85 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                              <ClipboardCheck className="size-3.5" />
+                              Applied
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {item.beforeText ? (
+                          <div className="mt-3 rounded-lg border border-white/80 bg-white/75 p-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                              Original
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-700">
+                              {item.beforeText}
+                            </p>
+                          </div>
+                        ) : null}
+
+                        {rewriteOptions.length ? (
+                          <div className="mt-3 grid gap-2">
+                            {rewriteOptions.map((option, index) => {
+                              const label = option.tone ? rewriteToneLabels[option.tone] : "Suggested";
+                              const isSelected = rewriteState?.selectedRewrite === option.text;
+
+                              return (
+                                <div
+                                  key={`${item.id}-rewrite-${index}`}
+                                  className={cn(
+                                    "rounded-lg border bg-white/85 p-3",
+                                    isSelected ? "border-teal-300" : "border-white/80"
+                                  )}
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-teal-700">
+                                      {label} rewrite
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {onCopyRewrite ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => onCopyRewrite(item.id, option.text)}
+                                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:text-slate-950"
+                                        >
+                                          <Copy className="size-3.5" />
+                                          Copy
+                                        </button>
+                                      ) : null}
+                                      {onApplyRewrite ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => onApplyRewrite(item.id, option.text)}
+                                          className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800 transition hover:bg-teal-100"
+                                        >
+                                          <ClipboardCheck className="size-3.5" />
+                                          Mark applied
+                                        </button>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                  <p className="mt-2 text-sm leading-6 text-slate-800">
+                                    {option.text}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
                 </div>
               </article>

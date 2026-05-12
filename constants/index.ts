@@ -67,7 +67,18 @@ export const AIResponseFormat = `
         reason: string; //why this matters for ATS or recruiters
         beforeText?: string; //exact weak resume text if identifiable
         suggestedRewrite?: string; //improved bullet or sentence if useful
+        rewriteVariants?: {
+          tone: "concise" | "impact" | "ats";
+          text: string;
+        }[]; //optional alternate rewrites for high-impact bullets
         keywordsToAdd?: string[]; //only for keyword-related actions
+        evidence?: {
+          section?: string; //resume section where the issue appears, such as Projects, Experience, Skills, or Summary
+          originalText?: string; //exact or near-exact resume text only when confidently identifiable
+          page?: number; //resume page number if identifiable
+          confidence: "high" | "medium" | "low"; //confidence in this evidence mapping
+          explanation?: string; //why this evidence relates to the action item
+        };
       }[]; //provide 6-10 checklist-ready items, sorted by impact
     }`;
 
@@ -96,7 +107,10 @@ export const prepareInstructions = ({
   The job description is: ${jobDescription}
   Identify critical job keywords from the job description, check if they exist in the resume, and report coverage plus matched/missing/extras lists.
   Create checklist-ready actionItems with priority, effort, category, issue, recommendation, and reason.
+  For each action item, map the feedback to resume evidence when possible. Include evidence.section, evidence.originalText, evidence.page, evidence.confidence, and evidence.explanation.
+  Only include evidence.originalText when the exact or near-exact resume text can be identified confidently. If you are uncertain, omit originalText and use confidence "low".
   For weak resume bullets, include beforeText and suggestedRewrite when you can identify the original text confidently.
+  For high-impact rewrite opportunities, include up to 3 rewriteVariants with tones "concise", "impact", or "ats".
   Suggested rewrites must be truthful, specific, concise, and avoid inventing metrics that are not supported by the resume.
   For missing keywords, explain how to add them naturally and include keywordsToAdd.
   Provide 3-4 interview preparation questions tailored to this role with rationale and guidance on how to answer.

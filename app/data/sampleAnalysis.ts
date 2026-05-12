@@ -1,9 +1,138 @@
+const SAMPLE_PREVIOUS_CREATED_AT = 1761609600000;
+const SAMPLE_CURRENT_CREATED_AT = 1762214400000;
+
+export const SAMPLE_PREVIOUS_RESUME: Resume = {
+  id: "sample-analysis-v1",
+  companyName: "Northstar Analytics",
+  jobTitle: "Junior Frontend Developer",
+  resumePath: "",
+  imagePath: "",
+  jobDescription:
+    "Northstar Analytics is hiring a Junior Frontend Developer to build responsive React interfaces, collaborate with product and design, improve accessibility, consume REST APIs, and ship production-quality UI with TypeScript, Tailwind CSS, and modern testing practices.",
+  createdAt: SAMPLE_PREVIOUS_CREATED_AT,
+  updatedAt: SAMPLE_PREVIOUS_CREATED_AT,
+  version: 1,
+  feedback: {
+    overallScore: 68,
+    ATS: {
+      score: 63,
+      tips: [
+        {
+          type: "good",
+          tip: "The resume uses recognizable headings such as Skills, Projects, and Education.",
+        },
+        {
+          type: "improve",
+          tip: "Add role-specific frontend keywords such as accessibility, REST APIs, and component testing.",
+        },
+        {
+          type: "improve",
+          tip: "Simplify dense project formatting so ATS parsers can read bullets more reliably.",
+        },
+      ],
+    },
+    toneAndStyle: {
+      score: 73,
+      tips: [
+        {
+          type: "good",
+          tip: "The resume sounds professional and clear.",
+          explanation: "The tone is appropriate for an entry-level developer role.",
+        },
+        {
+          type: "improve",
+          tip: "Make the summary more specific to frontend product work.",
+          explanation: "The summary is broad and does not yet emphasize React, UI quality, or collaboration.",
+        },
+      ],
+    },
+    content: {
+      score: 66,
+      tips: [
+        {
+          type: "good",
+          tip: "Project entries show hands-on development experience.",
+          explanation: "The resume includes practical projects instead of relying only on coursework.",
+        },
+        {
+          type: "improve",
+          tip: "Add measurable outcomes to project bullets.",
+          explanation: "The strongest projects describe tasks but do not show impact or scale.",
+        },
+      ],
+    },
+    structure: {
+      score: 70,
+      tips: [
+        {
+          type: "good",
+          tip: "The resume follows a conventional section order.",
+          explanation: "Recruiters can quickly find summary, skills, projects, and education.",
+        },
+        {
+          type: "improve",
+          tip: "Move the most relevant frontend project higher.",
+          explanation: "The first project should carry the strongest evidence for the target role.",
+        },
+      ],
+    },
+    skills: {
+      score: 69,
+      tips: [
+        {
+          type: "good",
+          tip: "The skills section includes React and Tailwind CSS.",
+          explanation: "These tools are relevant to the target job.",
+        },
+        {
+          type: "improve",
+          tip: "Group skills by category and add testing/accessibility tools.",
+          explanation: "A categorized skills section would make role alignment easier to scan.",
+        },
+      ],
+    },
+    keywordAlignment: {
+      coverage: 54,
+      matched: ["React", "Tailwind CSS", "responsive UI", "Git"],
+      missing: ["TypeScript", "accessibility", "REST APIs", "component testing", "design collaboration"],
+      extras: ["Python", "Firebase"],
+    },
+    interviewPrep: {
+      questions: [
+        {
+          question: "Tell me about a frontend project you built with React.",
+          rationale: "The role requires hands-on React experience.",
+          answerGuidance: "Explain the user problem, the components you built, and what improved.",
+        },
+      ],
+    },
+    actionItems: [
+      {
+        id: "sample-v1-keywords-accessibility",
+        category: "keywords",
+        priority: "critical",
+        effort: "quick",
+        title: "Add accessibility evidence naturally",
+        issue: "The role values accessible UI, but the resume does not mention accessibility.",
+        recommendation: "Add truthful evidence about semantic HTML, keyboard navigation, ARIA usage, or contrast checks.",
+        reason: "Accessibility is a high-signal frontend keyword for this role.",
+        keywordsToAdd: ["accessibility", "semantic HTML"],
+      },
+    ],
+  },
+};
+
 export const SAMPLE_RESUME: Resume = {
   id: "sample-analysis",
   companyName: "Northstar Analytics",
   jobTitle: "Junior Frontend Developer",
   resumePath: "",
   imagePath: "",
+  createdAt: SAMPLE_CURRENT_CREATED_AT,
+  updatedAt: SAMPLE_CURRENT_CREATED_AT,
+  revisionOf: SAMPLE_PREVIOUS_RESUME.id,
+  previousAnalysisId: SAMPLE_PREVIOUS_RESUME.id,
+  version: 2,
   jobDescription:
     "Northstar Analytics is hiring a Junior Frontend Developer to build responsive React interfaces, collaborate with product and design, improve accessibility, consume REST APIs, and ship production-quality UI with TypeScript, Tailwind CSS, and modern testing practices.",
   feedback: {
@@ -147,6 +276,15 @@ export const SAMPLE_RESUME: Resume = {
         reason:
           "Accessibility keywords improve role alignment and show professional frontend judgment.",
         keywordsToAdd: ["accessibility", "semantic HTML", "keyboard navigation"],
+        evidence: {
+          section: "Projects",
+          originalText:
+            "Built responsive pages with React and Tailwind CSS for a student dashboard.",
+          page: 1,
+          confidence: "medium",
+          explanation:
+            "This project bullet is the best place to add truthful accessibility evidence because it already describes UI implementation.",
+        },
       },
       {
         id: "sample-content-project-outcomes",
@@ -160,8 +298,31 @@ export const SAMPLE_RESUME: Resume = {
           "Add metrics such as reduced load time, improved Lighthouse score, number of screens built, or users tested.",
         reason:
           "Measured outcomes make project work feel more credible and recruiter-ready.",
+        beforeText:
+          "Built a responsive React dashboard with reusable components.",
         suggestedRewrite:
           "Built a responsive React dashboard with reusable TypeScript components, improving Lighthouse performance from 72 to 91 and reducing repeated UI code across 6 screens.",
+        rewriteVariants: [
+          {
+            tone: "concise",
+            text:
+              "Built a responsive React dashboard with reusable TypeScript components across 6 screens.",
+          },
+          {
+            tone: "ats",
+            text:
+              "Developed a responsive React and TypeScript dashboard using reusable components, Tailwind CSS, and accessibility-minded UI patterns.",
+          },
+        ],
+        evidence: {
+          section: "Projects",
+          originalText:
+            "Built a responsive React dashboard with reusable components.",
+          page: 1,
+          confidence: "high",
+          explanation:
+            "The original bullet is clear but does not yet show measurable impact or enough target-role keywords.",
+        },
       },
       {
         id: "sample-ats-formatting",
@@ -175,6 +336,15 @@ export const SAMPLE_RESUME: Resume = {
           "Use straightforward bullet text with clear verbs, tools, and outcomes instead of compact symbol-heavy formatting.",
         reason:
           "Cleaner formatting improves both machine parsing and human scanning.",
+        evidence: {
+          section: "Projects",
+          originalText:
+            "React dashboard | Tailwind | Firebase | UI components",
+          page: 1,
+          confidence: "medium",
+          explanation:
+            "Compact symbol-heavy formatting can be harder for some ATS systems to interpret than normal bullet sentences.",
+        },
       },
       {
         id: "sample-structure-priority",
@@ -188,6 +358,13 @@ export const SAMPLE_RESUME: Resume = {
           "Move the React dashboard or resume analyzer project to the top of the projects section.",
         reason:
           "Recruiters often scan from the top down, so ordering can materially affect first impression.",
+        evidence: {
+          section: "Projects",
+          page: 1,
+          confidence: "low",
+          explanation:
+            "The strongest frontend project appears to be present, but exact ordering should be checked in the resume editor.",
+        },
       },
       {
         id: "sample-strength-modern-stack",

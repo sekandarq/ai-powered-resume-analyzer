@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { CheckCircle2, ScanText, ShieldCheck, Sparkles, Type, X } from "lucide-react";
 import Navbar from "~/components/Navbar";
 import FileUploader from "~/components/FileUploader";
@@ -8,6 +8,7 @@ import Button from "~/components/ui/Button";
 import Input from "~/components/ui/Input";
 import Textarea from "~/components/ui/Textarea";
 import Card from "~/components/ui/Card";
+import Alert from "~/components/ui/Alert";
 import UsageCostTable from "~/components/UsageCostTable";
 import SiteFooter from "~/components/SiteFooter";
 import { usePuterStore } from "~/lib/puter";
@@ -148,6 +149,8 @@ const normalizeActionItems = (value: unknown): ActionItem[] => {
   const allowedCategories = ["ats", "keywords", "content", "structure", "tone", "skills"] as const;
   const allowedPriorities = ["critical", "important", "minor", "strength"] as const;
   const allowedEfforts = ["quick", "moderate", "deep"] as const;
+  const allowedConfidence = ["high", "medium", "low"] as const;
+  const allowedRewriteTones = ["concise", "impact", "ats"] as const;
 
   return value.filter(isObject).map((item, index) => {
     const title = getValue(item, ["title", "tip", "action", "recommendation"]);
@@ -160,6 +163,24 @@ const normalizeActionItems = (value: unknown): ActionItem[] => {
     const effort = isString(item.effort) && allowedEfforts.includes(item.effort as ActionItem["effort"])
       ? item.effort as ActionItem["effort"]
       : "quick";
+    const evidence = isObject(item.evidence) ? item.evidence : null;
+    const confidence = evidence && isString(evidence.confidence) && allowedConfidence.includes(evidence.confidence as ResumeEvidence["confidence"])
+      ? evidence.confidence as ResumeEvidence["confidence"]
+      : "low";
+    const rewriteVariants = Array.isArray(item.rewriteVariants)
+      ? item.rewriteVariants
+          .filter(isObject)
+          .map((variant) => ({
+            tone: isString(variant.tone) && allowedRewriteTones.includes(variant.tone as RewriteVariant["tone"])
+              ? variant.tone as RewriteVariant["tone"]
+              : "impact",
+            text: isString(variant.text) ? variant.text : "",
+          }))
+          .filter((variant) => variant.text.trim())
+      : [];
+    const evidencePage = evidence && isNumber(evidence.page)
+      ? Math.max(1, Math.round(Number(evidence.page)))
+      : undefined;
 
     return {
       id: isString(item.id) ? item.id : `${category}-${index + 1}`,
@@ -172,7 +193,19 @@ const normalizeActionItems = (value: unknown): ActionItem[] => {
       reason: isString(item.reason) ? item.reason : "This can improve recruiter clarity and ATS alignment.",
       ...(isString(item.beforeText) ? { beforeText: item.beforeText } : {}),
       ...(isString(item.suggestedRewrite) ? { suggestedRewrite: item.suggestedRewrite } : {}),
+      ...(rewriteVariants.length ? { rewriteVariants } : {}),
       ...(Array.isArray(item.keywordsToAdd) ? { keywordsToAdd: toStringArray(item.keywordsToAdd) } : {}),
+      ...(evidence
+        ? {
+            evidence: {
+              ...(isString(evidence.section) ? { section: evidence.section } : {}),
+              ...(isString(evidence.originalText) ? { originalText: evidence.originalText } : {}),
+              ...(evidencePage ? { page: evidencePage } : {}),
+              confidence,
+              ...(isString(evidence.explanation) ? { explanation: evidence.explanation } : {}),
+            },
+          }
+        : {}),
     };
   });
 };
@@ -277,19 +310,26 @@ const parseFeedbackPayload = (feedbackText: string): Feedback => {
 const Upload = () => {
   const { auth, isLoading, fs, ai, kv } = usePuterStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const addToast = useToastStore((state) => state.addToast);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [companyName, setCompanyName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [jobSource, setJobSource] = useState<"text" | "image">("text");
   const [jobImage, setJobImage] = useState<File | null>(null);
+  const [revisionSource, setRevisionSource] = useState<Resume | null>(null);
+  const [revisionLoadError, setRevisionLoadError] = useState<string | null>(null);
   const [usageAcknowledged, setUsageAcknowledged] = useState(() => (
     typeof window !== "undefined" &&
     window.localStorage.getItem(USAGE_ACKNOWLEDGED_KEY) === "true"
   ));
   const [showUsageReminder, setShowUsageReminder] = useState(false);
   const [pendingResumeId, setPendingResumeId] = useState<string | null>(null);
+  const revisionOf = searchParams.get("revisionOf");
 
   const progressSteps = [
     "Uploading resume",
@@ -309,9 +349,43 @@ const Upload = () => {
 
   useEffect(() => {
     if (!isLoading && !auth.isAuthenticated) {
-      navigate("/auth?next=/upload");
+      navigate(`/auth?next=${encodeURIComponent(`/upload${location.search}`)}`);
     }
-  }, [auth.isAuthenticated, isLoading, navigate]);
+  }, [auth.isAuthenticated, isLoading, location.search, navigate]);
+
+  useEffect(() => {
+    const loadRevisionSource = async () => {
+      if (!revisionOf) {
+        setRevisionSource(null);
+        setRevisionLoadError(null);
+        return;
+      }
+      if (isLoading || !auth.isAuthenticated) return;
+
+      setRevisionLoadError(null);
+      try {
+        const saved = await kv.get(`resume:${revisionOf}`);
+        if (!saved) {
+          setRevisionSource(null);
+          setRevisionLoadError("The original analysis could not be found. You can still run a fresh analysis.");
+          return;
+        }
+
+        const parsed = JSON.parse(saved) as Resume;
+        setRevisionSource(parsed);
+        setCompanyName(parsed.companyName || "");
+        setJobTitle(parsed.jobTitle || "");
+        setJobDescription(parsed.jobDescription || "");
+        setJobSource("text");
+      } catch (error) {
+        console.error(error);
+        setRevisionSource(null);
+        setRevisionLoadError("Could not load the original analysis. You can still run a fresh analysis.");
+      }
+    };
+
+    loadRevisionSource();
+  }, [auth.isAuthenticated, isLoading, kv, revisionOf]);
 
   const acknowledgeUsage = (checked: boolean) => {
     setUsageAcknowledged(checked);
@@ -462,6 +536,7 @@ const Upload = () => {
 
       setStatusText("Preparing job context");
       const uuid = generateUUID();
+      const now = Date.now();
       const data: Omit<Resume, "feedback"> & { feedback: Feedback | "" } = {
         id: uuid,
         resumePath: uploadedFile.path,
@@ -469,6 +544,15 @@ const Upload = () => {
         companyName,
         jobTitle,
         jobDescription: boundedJobDescription,
+        createdAt: now,
+        updatedAt: now,
+        ...(revisionSource
+          ? {
+              revisionOf: revisionSource.revisionOf || revisionSource.id,
+              previousAnalysisId: revisionSource.id,
+              version: (revisionSource.version || 1) + 1,
+            }
+          : { version: 1 }),
         feedback: "",
       };
       await kv.set(`resume:${uuid}`, JSON.stringify(data));
@@ -495,6 +579,7 @@ const Upload = () => {
           : feedback.message.content[0].text;
 
       data.feedback = parseFeedbackPayload(feedbackText);
+      data.updatedAt = Date.now();
       await kv.set(`resume:${uuid}`, JSON.stringify(data));
 
       setStatusText("Finalizing dashboard");
@@ -523,12 +608,6 @@ const Upload = () => {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = event.currentTarget.closest("form");
-    if (!form) return;
-
-    const formData = new FormData(form);
-    const companyName = formData.get("company-name") as string;
-    const jobTitle = formData.get("job-title") as string;
 
     if (!file) {
       addToast({
@@ -610,13 +689,27 @@ const Upload = () => {
           </div>
 
           <h1>
-            Build stronger application with <span className="text-gradient">ResuMatch</span>.
+            {revisionSource ? "Re-check your improved resume with " : "Build stronger application with "}
+            <span className="text-gradient">ResuMatch</span>.
           </h1>
 
           <p className="max-w-4xl text-base leading-7 text-slate-600 sm:text-lg">
-            Get the role, upload your resume, and stop guessing why applications get ignored.
-            Get a cleaner, smarter review with ATS insights and recruiter-style feedback that helps you improve fast.          
+            {revisionSource
+              ? "Upload your revised PDF and compare the new analysis against the previous version using the same role context."
+              : "Get the role, upload your resume, and stop guessing why applications get ignored. Get a cleaner, smarter review with ATS insights and recruiter-style feedback that helps you improve fast."}
           </p>
+
+          {revisionLoadError && (
+            <Alert tone="info" className="w-full max-w-3xl justify-center text-center">
+              {revisionLoadError}
+            </Alert>
+          )}
+
+          {revisionSource && (
+            <Alert tone="info" className="w-full max-w-3xl justify-center text-center">
+              Re-analysis mode: job context is copied from version {revisionSource.version || 1}. Upload the updated resume PDF to create version {(revisionSource.version || 1) + 1}.
+            </Alert>
+          )}
           <div className="flex flex-wrap justify-center gap-2">
             <span className="step-chip"><span className="dot">1</span> Job context</span>
             <span className="step-chip"><span className="dot">2</span> Resume upload</span>
@@ -737,11 +830,25 @@ const Upload = () => {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="form-div">
                         <label htmlFor="company-name">Company Name</label>
-                        <Input type="text" id="company-name" name="company-name" placeholder="Enter company name" />
+                        <Input
+                          type="text"
+                          id="company-name"
+                          name="company-name"
+                          placeholder="Enter company name"
+                          value={companyName}
+                          onChange={(event) => setCompanyName(event.target.value)}
+                        />
                       </div>
                       <div className="form-div">
                         <label htmlFor="job-title">Job Title</label>
-                        <Input type="text" id="job-title" name="job-title" placeholder="Enter job title" />
+                        <Input
+                          type="text"
+                          id="job-title"
+                          name="job-title"
+                          placeholder="Enter job title"
+                          value={jobTitle}
+                          onChange={(event) => setJobTitle(event.target.value)}
+                        />
                       </div>
                     </div>
                   </div>
@@ -850,7 +957,7 @@ const Upload = () => {
                         />
                         <span className="text-sm leading-6 text-amber-950">
                           I understand that AI feedback may be incomplete or inaccurate, resume analysis may consume
-                          resources from my connected Puter account (Free Plan: 0.25$ total), and I should review suggestions before using them
+                          resources from my connected Puter account (Free Plan: $0.25 Total), and I should review suggestions before using them
                           in real job applications.
                         </span>
                       </label>
@@ -875,7 +982,7 @@ const Upload = () => {
                 </div>
                 <p className="text-sm leading-6 text-slate-600">
                   AI Analysis may consume
-                  resources from your connected Puter account (Free Plan: 0.25$ total). Avoid uploading highly sensitive personal information,
+                  resources from your connected Puter account (Free Plan: $0.25 Total). Avoid uploading highly sensitive personal information,
                   and always review suggestions before using them in real applications. You can check your usage and balance here: <a href="https://puter.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">Puter Dashboard</a>.
                 </p>
                 <UsageCostTable />

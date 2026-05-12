@@ -6,6 +6,30 @@ interface Resume {
     resumePath: string;
     jobDescription?: string;
     feedback: Feedback;
+    createdAt?: number;
+    updatedAt?: number;
+    revisionOf?: string;
+    previousAnalysisId?: string;
+    version?: number;
+}
+
+interface ResumeEvidence {
+    section?: string;
+    originalText?: string;
+    page?: number;
+    confidence: "high" | "medium" | "low";
+    explanation?: string;
+}
+
+interface RewriteVariant {
+    tone: "concise" | "impact" | "ats";
+    text: string;
+}
+
+interface RewriteProgress {
+    selectedRewrite?: string;
+    copiedAt?: number;
+    appliedAt?: number;
 }
 
 interface ActionItem {
@@ -19,7 +43,9 @@ interface ActionItem {
     reason: string;
     beforeText?: string;
     suggestedRewrite?: string;
+    rewriteVariants?: RewriteVariant[];
     keywordsToAdd?: string[];
+    evidence?: ResumeEvidence;
 }
 
 interface Feedback {

@@ -9,14 +9,17 @@ import KeywordAlignment from "~/components/feedback/KeywordAlignment";
 import InterviewPrep from "~/components/feedback/InterviewPrep";
 import Card from "~/components/ui/Card";
 import ActionPlan from "~/components/feedback/ActionPlan";
+import ComparisonSummary from "~/components/feedback/ComparisonSummary";
 import Button from "~/components/ui/Button";
 import SiteFooter from "~/components/SiteFooter";
-import { SAMPLE_RESUME } from "~/data/sampleAnalysis";
+import { SAMPLE_PREVIOUS_RESUME, SAMPLE_RESUME } from "~/data/sampleAnalysis";
 import { buildMeta } from "~/lib/meta";
+import { useToastStore } from "~/lib/toast";
 import {
     ExternalLink,
     Eye,
     ListChecks,
+    RefreshCw,
     Target,
     X,
 } from "lucide-react";
@@ -139,6 +142,8 @@ const Resume = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [resumeUrl, setResumeUrl] = useState('');
     const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [currentResume, setCurrentResume] = useState<Resume | null>(null);
+    const [previousResume, setPreviousResume] = useState<Resume | null>(null);
     const [jobInfo, setJobInfo] = useState<{title: string; description: string; company: string}>({
         title: '',
         description: '',
@@ -150,6 +155,8 @@ const Resume = () => {
     const [focusMode, setFocusMode] = useState(false);
     const [completedActionIds, setCompletedActionIds] = useState<string[]>([]);
     const [actionsHydrated, setActionsHydrated] = useState(false);
+    const [rewriteStates, setRewriteStates] = useState<Record<string, RewriteProgress>>({});
+    const [rewritesHydrated, setRewritesHydrated] = useState(false);
     const [resumeMissing, setResumeMissing] = useState(false);
     const [assetLoadError, setAssetLoadError] = useState<string | null>(null);
     const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -158,6 +165,7 @@ const Resume = () => {
     const imageObjectUrlRef = useRef<string | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
+    const addToast = useToastStore((state) => state.addToast);
     const isSampleAnalysis = location.pathname === "/sample-analysis" || id === SAMPLE_RESUME.id;
     const analysisId = isSampleAnalysis ? SAMPLE_RESUME.id : id;
 
@@ -174,6 +182,8 @@ const Resume = () => {
                 setAssetLoadError(null);
                 setImageUrl('');
                 setResumeUrl('');
+                setCurrentResume(SAMPLE_RESUME);
+                setPreviousResume(SAMPLE_PREVIOUS_RESUME);
                 setJobInfo({
                     title: SAMPLE_RESUME.jobTitle,
                     description: SAMPLE_RESUME.jobDescription || '',
@@ -188,6 +198,8 @@ const Resume = () => {
             setResumeMissing(false);
             setAssetLoadError(null);
             setFeedback(null);
+            setCurrentResume(null);
+            setPreviousResume(null);
             setImageUrl('');
             setResumeUrl('');
             const resume = await kv.get(`resume:${id}`);
@@ -199,6 +211,7 @@ const Resume = () => {
             }
 
             const data = JSON.parse(resume) as Resume;
+            setCurrentResume(data);
             setJobInfo({
                 title: data.jobTitle || '',
                 description: data.jobDescription || '',
@@ -206,6 +219,16 @@ const Resume = () => {
             });
 
             setFeedback(data.feedback);
+
+            if (data.previousAnalysisId) {
+                try {
+                    const previous = await kv.get(`resume:${data.previousAnalysisId}`);
+                    setPreviousResume(previous ? JSON.parse(previous) as Resume : null);
+                } catch (error) {
+                    console.error("Failed to load previous analysis", error);
+                    setPreviousResume(null);
+                }
+            }
 
             try {
                 const resumeBlob = await fs.read(data.resumePath);
@@ -293,9 +316,34 @@ const Resume = () => {
     }, [analysisId]);
 
     useEffect(() => {
+        if (!analysisId) return;
+
+        setRewritesHydrated(false);
+        const saved = window.localStorage.getItem(`resume-rewrites:${analysisId}`);
+        if (!saved) {
+            setRewriteStates({});
+            setRewritesHydrated(true);
+            return;
+        }
+
+        try {
+            const parsed = JSON.parse(saved);
+            setRewriteStates(parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {});
+        } catch {
+            setRewriteStates({});
+        }
+        setRewritesHydrated(true);
+    }, [analysisId]);
+
+    useEffect(() => {
         if (!analysisId || !actionsHydrated) return;
         window.localStorage.setItem(`resume-actions:${analysisId}`, JSON.stringify(completedActionIds));
     }, [actionsHydrated, analysisId, completedActionIds]);
+
+    useEffect(() => {
+        if (!analysisId || !rewritesHydrated) return;
+        window.localStorage.setItem(`resume-rewrites:${analysisId}`, JSON.stringify(rewriteStates));
+    }, [analysisId, rewriteStates, rewritesHydrated]);
 
     const criticalCount = useMemo(() => {
         if (!feedback) return 0;
@@ -399,6 +447,53 @@ const Resume = () => {
         ));
     };
 
+    const copyRewrite = async (actionId: string, text: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setRewriteStates((prev) => ({
+                ...prev,
+                [actionId]: {
+                    ...prev[actionId],
+                    selectedRewrite: text,
+                    copiedAt: Date.now(),
+                },
+            }));
+            addToast({
+                type: "success",
+                title: "Rewrite copied",
+                description: "Paste it into your resume editor and adjust it if needed.",
+            });
+        } catch {
+            addToast({
+                type: "error",
+                title: "Copy failed",
+                description: "Your browser did not allow clipboard access.",
+            });
+        }
+    };
+
+    const applyRewrite = (actionId: string, text: string) => {
+        setRewriteStates((prev) => ({
+            ...prev,
+            [actionId]: {
+                ...prev[actionId],
+                selectedRewrite: text,
+                appliedAt: Date.now(),
+            },
+        }));
+        setCompletedActionIds((prev) => prev.includes(actionId) ? prev : [...prev, actionId]);
+        addToast({
+            type: "success",
+            title: "Rewrite marked as applied",
+            description: "Re-run analysis after updating your resume PDF to verify the improvement.",
+        });
+    };
+
+    const startReanalysis = () => {
+        if (!analysisId || isSampleAnalysis) return;
+        navigate(`/upload?revisionOf=${analysisId}`);
+    };
+
     const visibleCount = sections.filter((section) => visibleSections[section.id]).length;
 
     return (
@@ -432,6 +527,18 @@ const Resume = () => {
                                 </div>
 
                                 <div className="feedback-dashboard-actions">
+                                    {!isSampleAnalysis && analysisId && (
+                                        <Button
+                                            type="button"
+                                            variant="primary"
+                                            size="sm"
+                                            onClick={startReanalysis}
+                                            className="gap-2"
+                                        >
+                                            <RefreshCw className="h-4 w-4" />
+                                            Re-analyze
+                                        </Button>
+                                    )}
                                     {imageUrl && resumeUrl && (
                                         <div className="resume-preview-trigger group">
                                             <Button
@@ -516,6 +623,13 @@ const Resume = () => {
                             ))}
                         </div>
 
+                        {currentResume && previousResume && (
+                            <ComparisonSummary
+                                current={currentResume}
+                                previous={previousResume}
+                            />
+                        )}
+
                         <div
                             ref={registerSectionRef('plan')}
                             data-section-id="plan"
@@ -525,6 +639,10 @@ const Resume = () => {
                                 items={actionItems}
                                 completedIds={completedActionIds}
                                 onToggle={toggleActionItem}
+                                rewriteStates={rewriteStates}
+                                onCopyRewrite={copyRewrite}
+                                onApplyRewrite={applyRewrite}
+                                onViewResume={imageUrl && resumeUrl ? () => setPreviewOpen(true) : undefined}
                             />
                         </div>
 
